@@ -1,6 +1,8 @@
 #include "common.h"
 
-IDI_APPLICATION ICON "icon.ico"
+IDI_APPLICATION ICON "assets/icon.ico"
+
+SNAKE_FOOD_TILE1 IMAGE "assets/food1.png"
 
 #include <winver.h>
 VS_VERSION_INFO		VERSIONINFO

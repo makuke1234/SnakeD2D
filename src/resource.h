@@ -3,5 +3,7 @@
 
 #include "common.h"
 
+#define SNAKE_FOOD_TILE1 100
+
 
 #endif
