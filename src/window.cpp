@@ -33,21 +33,21 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 	case WM_SIZING:
 	{
 		auto r = reinterpret_cast<RECT *>(lp);
-		POINT dMinSize = { .x = This->dipx(This->m_minSize.x), .y = This->dipy(This->m_minSize.y) };
+		POINT tempMSz = This->m_minSize;
 		// x-coordinate
 		switch (wp)
 		{
 		case WMSZ_LEFT:
 		case WMSZ_TOPLEFT:
 		case WMSZ_BOTTOMLEFT:
-			if ((r->right - r->left) < dMinSize.x)
-				r->left = r->right - dMinSize.x;
+			if ((r->right - r->left) < tempMSz.x)
+				r->left = r->right - tempMSz.x;
 			break;
 		case WMSZ_RIGHT:
 		case WMSZ_TOPRIGHT:
 		case WMSZ_BOTTOMRIGHT:
-			if ((r->right - r->left) < dMinSize.x)
-				r->right = r->left + dMinSize.x;
+			if ((r->right - r->left) < tempMSz.x)
+				r->right = r->left + tempMSz.x;
 			break;
 		}
 
@@ -57,14 +57,14 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 		case WMSZ_TOP:
 		case WMSZ_TOPLEFT:
 		case WMSZ_TOPRIGHT:
-			if ((r->bottom - r->top) < dMinSize.y)
-				r->top = r->bottom - dMinSize.y;
+			if ((r->bottom - r->top) < tempMSz.y)
+				r->top = r->bottom - tempMSz.y;
 			break;
 		case WMSZ_BOTTOM:
 		case WMSZ_BOTTOMLEFT:
 		case WMSZ_BOTTOMRIGHT:
-			if ((r->bottom - r->top) < dMinSize.y)
-				r->bottom = r->top + dMinSize.y;
+			if ((r->bottom - r->top) < tempMSz.y)
+				r->bottom = r->top + tempMSz.y;
 			break;
 		}
 		break;
@@ -87,6 +87,8 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 			newR->right - newR->left, newR->bottom - newR->top,
 			SWP_NOZORDER
 		);
+		// Calculate new border
+		This->p_calcBorder();
 		break;
 	}
 	case WM_CLOSE:
@@ -100,6 +102,20 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 	}
 
 	return 0;
+}
+
+void snake::Application::p_calcBorder() noexcept
+{
+	RECT clientR{}, windowR{};
+	::GetClientRect(this->m_hwnd, &clientR);
+	::GetWindowRect(this->m_hwnd, &windowR);
+	this->m_border = D2D1::SizeU(
+		(windowR.right  - windowR.left) - (clientR.right  - clientR.left),
+		(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
+	);
+
+	this->m_minSize.x = this->dipxi<int>(tileSz, 63.f) + this->m_border.width;
+	this->m_minSize.y = this->dipyi<int>(tileSz, 36.f) + this->m_border.height;
 }
 
 snake::Application::Application(PSTR cmdArgs) noexcept
@@ -150,7 +166,7 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		0,
 		this->className.data(),
 		this->applicationName.data(),
-		WS_OVERLAPPEDWINDOW,
+		WS_OVERLAPPEDWINDOW ^ (WS_SIZEBOX | WS_MAXIMIZEBOX),
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -166,11 +182,33 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		return false;
 	}
 
+	this->p_calcBorder();
+	::SetWindowPos(
+		this->m_hwnd,
+		nullptr,
+		0,
+		0,
+		this->m_minSize.x,
+		this->m_minSize.y,
+		SWP_NOZORDER | SWP_NOMOVE | SWP_NOREDRAW
+	);
+
 	this->m_obstacleTiles.emplace_back(
-		this->dipxy<D2D1_SIZE_U>(15.f, 15.f),
-		this->dipxy<D2D1_SIZE_F>(0.f, 0.f),
+		this->dipxy<D2D1_SIZE_U>(tileSz, tileSz),
+		this->dipxyi<D2D1_SIZE_F>(0.f, 0.f),
 		D2D1::SizeU(10, 15)
 	);
+	this->m_snakeBodyTiles.emplace_back(
+		this->dipxy<D2D1_SIZE_U>(tileSz, tileSz),
+		this->dipxyi<D2D1_SIZE_F>(tileSz, tileSz, 10.f),
+		D2D1::SizeU(10, 15)
+	);
+	this->m_snakeHeadTile = tile(
+		this->dipxy<D2D1_SIZE_U>(tileSz, tileSz),
+		this->dipxyi<D2D1_SIZE_F>(tileSz, tileSz, 20.f, 2.f),
+		D2D1::SizeU(1, 1)
+	);
+
 
 	// Create render target
 	if (!this->CreateAssets()) [[unlikely]]
@@ -277,6 +315,58 @@ bool snake::Application::CreateAssets() noexcept
 
 	auto itWidth = UINT(tWidth), itHeight = UINT(tHeight);
 
+	hr = this->m_pRT->CreateBitmap(
+		D2D1::SizeU(itWidth, itHeight),
+		D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+		),
+		&this->m_pObstacleTileBm
+	);
+	if (FAILED(hr)) [[unlikely]]
+	{
+		this->Error(errid::D2DAssets);
+		return false;
+	}
+
+	hr = this->m_pRT->CreateBitmap(
+		D2D1::SizeU(itWidth, itHeight),
+		D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+		),
+		&this->m_pSnakeBodyTileBm
+	);
+	if (FAILED(hr)) [[unlikely]]
+	{
+		this->Error(errid::D2DAssets);
+		return false;
+	}
+
+	hr = this->m_pRT->CreateBitmap(
+		D2D1::SizeU(itWidth, itHeight),
+		D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+		),
+		&this->m_pSnakeHeadTileBm
+	);
+	if (FAILED(hr)) [[unlikely]]
+	{
+		this->Error(errid::D2DAssets);
+		return false;
+	}
+
+	hr = this->m_pRT->CreateBitmap(
+		D2D1::SizeU(itWidth, itHeight),
+		D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+		),
+		&this->m_pSnakeFoodTileBm
+	);
+	if (FAILED(hr)) [[unlikely]]
+	{
+		this->Error(errid::D2DAssets);
+		return false;
+	}
+
 	// Create raw bitmap buffer
 	auto rawArray = new COLORREF[itWidth * itHeight];
 	for (UINT y = 0; y < itHeight; ++y)
@@ -295,21 +385,42 @@ bool snake::Application::CreateAssets() noexcept
 			}
 		}
 	}
+	this->m_pObstacleTileBm->CopyFromMemory(nullptr, rawArray, itWidth * sizeof(COLORREF));
 
-	hr = this->m_pRT->CreateBitmap(
-		D2D1::SizeU(itWidth, itHeight),
-		D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
-		),
-		&this->m_pObstacleTileBm
-	);
-	if (FAILED(hr)) [[unlikely]]
+	for (UINT y = 0; y < itHeight; ++y)
 	{
-		this->Error(errid::D2DAssets);
-		return false;
+		for (UINT x = 0; x < itWidth; ++x)
+		{
+			// Draw black
+			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
+			{
+				rawArray[y * itWidth + x] = RGB(0, 0, 0);
+			}
+			// Draw red
+			else
+			{
+				rawArray[y * itWidth + x] = RGB(255, 0, 0);
+			}
+		}
 	}
+	this->m_pSnakeBodyTileBm->CopyFromMemory(nullptr, rawArray, itWidth * sizeof(COLORREF));
 
-	this->m_pObstacleTileBm->CopyFromMemory(nullptr, rawArray, itWidth * 4);
+	for (UINT y = 0; y < itHeight; ++y)
+	{
+		for (UINT x = 0; x < itWidth; ++x)
+		{
+			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
+			{
+				continue;
+			}
+			// Draw yellow
+			else
+			{
+				rawArray[y * itWidth + x] = RGB(255, 255, 0);
+			}
+		}
+	}
+	this->m_pSnakeHeadTileBm->CopyFromMemory(nullptr, rawArray, itWidth * sizeof(COLORREF));
 
 	delete[] rawArray;
 
@@ -320,7 +431,7 @@ bool snake::Application::CreateAssets() noexcept
 		if (!i.CreateAssets(this->m_pRT, this->m_pObstacleTileBm)) [[unlikely]]
 			return false;
 	}
-	/*for (auto & i : this->m_snakeBodyTiles)
+	for (auto & i : this->m_snakeBodyTiles)
 	{
 		if (!i.CreateAssets(this->m_pRT, this->m_pSnakeBodyTileBm)) [[unlikely]]
 			return false;
@@ -328,7 +439,7 @@ bool snake::Application::CreateAssets() noexcept
 	if (!this->m_snakeHeadTile.CreateAssets(this->m_pRT, this->m_pSnakeHeadTileBm)) [[unlikely]]
 		return false;
 
-	if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTileBm)) [[unlikely]]
+	/*if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTileBm)) [[unlikely]]
 		return false;
 	*/
 
@@ -364,9 +475,9 @@ void snake::Application::OnRender() noexcept
 	*/
 
 	tile::OnRender(this->m_obstacleTiles, this->m_pRT);
-	/*tile::OnRender(this->m_snakeBodyTiles, this->m_pRT);
+	tile::OnRender(this->m_snakeBodyTiles, this->m_pRT);
 	this->m_snakeHeadTile.OnRender(this->m_pRT);
-	this->m_snakeFoodTile.OnRender(this->m_pRT);*/
+	//this->m_snakeFoodTile.OnRender(this->m_pRT);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->DestroyAssets();

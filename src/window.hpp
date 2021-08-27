@@ -34,9 +34,13 @@ namespace snake
 			* m_pSnakeHeadTileBm{ nullptr }, * m_pSnakeFoodTileBm{ nullptr };
 
 		FLOAT m_dpiX{ 96.f }, m_dpiY{ 96.f };
+		D2D1_SIZE_U m_border{};
 		POINT m_minSize{ .x = 640, .y = 480 };
+		static constexpr FLOAT tileSz{ 15.f };
 
 		static LRESULT CALLBACK wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
+
+		void p_calcBorder() noexcept;
 
 	public:
 		// Disable default constructor
@@ -58,12 +62,30 @@ namespace snake
 			return T((FLOAT(input) * this->m_dpiY) / 96.f);
 		}
 
+		template<class retT, class T>
+		[[nodiscard]] retT dipxi(T input, T mult) const noexcept
+		{
+			return retT(T(long(dipx(input))) * mult);
+		}
+		template<class retT, class T>
+		[[nodiscard]] retT dipyi(T input, T mult) const noexcept
+		{
+			return retT(T(long(dipy(input))) * mult);
+		}
+
 		template<class X, class Y>
-		[[nodiscard]] X dipxy(Y x, Y y)
+		[[nodiscard]] X dipxy(Y x, Y y) const noexcept
 		{
 			auto [a1, a2] = X();
 			using retT = decltype(a1);
 			return { retT(dipx(x)), retT(dipy(y)) };
+		}
+		template<class X, class Y>
+		[[nodiscard]] X dipxyi(Y x, Y y, Y xmulti = 1, Y ymulti = 1) const noexcept
+		{
+			auto [a1, a2] = X();
+			using retT = decltype(a1);
+			return { retT(long(dipx(x))) * retT(xmulti), retT(long(dipy(y))) * retT(ymulti) };
 		}
 
 		bool Init(HINSTANCE hInst, int nCmdShow);
