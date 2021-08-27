@@ -202,18 +202,18 @@ int snake::Application::MsgLoop() noexcept
 	return int(msg.wParam);
 }
 
-void snake::Application::Error(std::wstring_view str) const noexcept
+void snake::Application::Error(const wchar_t * str) const noexcept
 {
 	::MessageBoxW(
 		this->m_hwnd,
-		str.data(),
+		str,
 		this->applicationName.data(),
 		MB_ICONERROR | MB_OK
 	);
 }
-void snake::Application::sError(std::wstring_view str) noexcept
+void snake::Application::sError(const wchar_t * str) noexcept
 {
-	::MessageBoxW(nullptr, str.data(), Application::applicationName.data(), MB_ICONERROR | MB_OK);
+	::MessageBoxW(nullptr, str, Application::applicationName.data(), MB_ICONERROR | MB_OK);
 }
 
 void snake::Application::Error(errid id) const noexcept
@@ -351,7 +351,7 @@ void snake::Application::OnRender() noexcept
 	this->CreateAssets();
 
 	PAINTSTRUCT ps;
-	auto hdc = ::BeginPaint(this->m_hwnd, &ps);
+	[[maybe_unused]] auto hdc = ::BeginPaint(this->m_hwnd, &ps);
 
 	// Begin also render target painting
 	this->m_pRT->BeginDraw();

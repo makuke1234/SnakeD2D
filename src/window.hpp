@@ -61,14 +61,16 @@ namespace snake
 		template<class X, class Y>
 		[[nodiscard]] X dipxy(Y x, Y y)
 		{
-			return { dipx(x), dipy(y) };
+			auto [a1, a2] = X();
+			using retT = decltype(a1);
+			return { retT(dipx(x)), retT(dipy(y)) };
 		}
 
 		bool Init(HINSTANCE hInst, int nCmdShow);
 		int MsgLoop() noexcept;
 
-		void Error(std::wstring_view str) const noexcept;
-		static void sError(std::wstring_view str) noexcept;
+		void Error(const wchar_t * str) const noexcept;
+		static void sError(const wchar_t * str) noexcept;
 
 		enum class errid : std::int_fast8_t
 		{
