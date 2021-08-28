@@ -2,7 +2,13 @@
 
 IDI_APPLICATION ICON "assets/icon.ico"
 
+// Food tiles
 SNAKE_FOOD_TILE1 IMAGE "assets/food1.png"
+
+// Sound effects
+SOUND_EAT WAVE "assets/eat.wav"
+SOUND_GAME_OVER WAVE "assets/game_over.wav"
+SOUND_WIN WAVE "assets/tada.wav"
 
 #include <winver.h>
 VS_VERSION_INFO		VERSIONINFO
