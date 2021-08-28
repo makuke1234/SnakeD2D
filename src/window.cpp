@@ -114,8 +114,8 @@ void snake::Application::p_calcBorder() noexcept
 		(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
 	);
 
-	this->m_minSize.x = this->dipxi<int>(tileSz, 63.f) + this->m_border.width;
-	this->m_minSize.y = this->dipyi<int>(tileSz, 36.f) + this->m_border.height;
+	this->m_minSize.x = this->dipx(tileSz * this->fieldWidth)  + this->m_border.width;
+	this->m_minSize.y = this->dipy(tileSz * this->fieldHeight) + this->m_border.height;
 }
 
 snake::Application::Application(PSTR cmdArgs) noexcept
@@ -166,7 +166,7 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		0,
 		this->className.data(),
 		this->applicationName.data(),
-		WS_OVERLAPPEDWINDOW ^ (WS_SIZEBOX | WS_MAXIMIZEBOX),
+		WS_OVERLAPPEDWINDOW ^ (/*WS_SIZEBOX |*/ WS_MAXIMIZEBOX),
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -190,22 +190,38 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		0,
 		this->m_minSize.x,
 		this->m_minSize.y,
-		SWP_NOZORDER | SWP_NOMOVE | SWP_NOREDRAW
+		SWP_NOZORDER | SWP_NOMOVE
 	);
 
 	this->m_obstacleTiles.emplace_back(
-		this->dipxy<D2D1_SIZE_U>(tileSz, tileSz),
-		this->dipxyi<D2D1_SIZE_F>(0.f, 0.f),
-		D2D1::SizeU(10, 15)
+		D2D1::SizeU(tileSz, tileSz),
+		D2D1::SizeF(0.f, 0.f),
+		D2D1::SizeU(6, 1)
 	);
+	this->m_obstacleTiles.emplace_back(
+		D2D1::SizeU(tileSz, tileSz),
+		D2D1::SizeF(0.f, 0.f),
+		D2D1::SizeU(1, 6)
+	);
+	this->m_obstacleTiles.emplace_back(
+		D2D1::SizeU(tileSz, tileSz),
+		D2D1::SizeF(tileSz * (this->fieldWidth - 6.f), 0.f),
+		D2D1::SizeU(6, 1)
+	);
+	this->m_obstacleTiles.emplace_back(
+		D2D1::SizeU(tileSz, tileSz),
+		D2D1::SizeF(tileSz * (this->fieldWidth - 1.f), 0.f),
+		D2D1::SizeU(1, 6)
+	);
+
 	this->m_snakeBodyTiles.emplace_back(
-		this->dipxy<D2D1_SIZE_U>(tileSz, tileSz),
-		this->dipxyi<D2D1_SIZE_F>(tileSz, tileSz, 10.f),
-		D2D1::SizeU(10, 15)
+		D2D1::SizeU(tileSz, tileSz),
+		D2D1::SizeF(tileSz * 10.f, tileSz),
+		D2D1::SizeU(10, 35)
 	);
 	this->m_snakeHeadTile = tile(
-		this->dipxy<D2D1_SIZE_U>(tileSz, tileSz),
-		this->dipxyi<D2D1_SIZE_F>(tileSz, tileSz, 20.f, 2.f),
+		D2D1::SizeU(tileSz, tileSz),
+		D2D1::SizeF(tileSz * 20.f, tileSz * 2.f),
 		D2D1::SizeU(1, 1)
 	);
 
@@ -309,11 +325,9 @@ bool snake::Application::CreateAssets() noexcept
 	
 	// Create bitmaps
 
-	auto [tWidth, tHeight] = this->m_obstacleTiles.back().m_tileSz;
-	auto borderW = UINT(tWidth * (4.f / 32.f));
-	auto borderH = UINT(tHeight * (4.f / 32.f));
-
-	auto itWidth = UINT(tWidth), itHeight = UINT(tHeight);
+	UINT itWidth = tileSz, itHeight = tileSz;
+	auto borderW = (itWidth * 2) / 15;
+	auto borderH = (itHeight * 2) / 15;
 
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
