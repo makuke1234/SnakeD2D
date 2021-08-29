@@ -23,6 +23,12 @@ namespace snake
 
 		void OnRender(ID2D1HwndRenderTarget * pRT) noexcept;
 
-		static void OnRender(std::vector<tile> & tiles, ID2D1HwndRenderTarget * pRT) noexcept;
+		template<class VecT>
+			requires std::is_same_v<std::decay_t<decltype(VecT()[0])>, tile>
+		static void OnRender(VecT & tiles, ID2D1HwndRenderTarget * pRT) noexcept
+		{
+			for (auto & i : tiles)
+				i.OnRender(pRT);
+		}
 	};
 }

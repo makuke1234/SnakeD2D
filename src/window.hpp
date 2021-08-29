@@ -2,6 +2,10 @@
 
 #include "common.hpp"
 #include "tiles.hpp"
+#include "snakelogic.hpp"
+
+#include <deque>
+#include <array>
 
 namespace snake
 {
@@ -27,20 +31,24 @@ namespace snake
 		ID2D1HwndRenderTarget * m_pRT{ nullptr };
 
 		std::vector<tile> m_obstacleTiles;
-		std::vector<tile> m_snakeBodyTiles;
+		std::deque<tile> m_snakeBodyTiles;
 		tile m_snakeHeadTile, m_snakeFoodTile;
 
 		ID2D1Bitmap * m_pObstacleTileBm{ nullptr }, * m_pSnakeBodyTileBm{ nullptr },
-			* m_pSnakeHeadTileBm{ nullptr }, * m_pSnakeFoodTileBm{ nullptr };
+			* m_pSnakeHeadTileBm{ nullptr };
+		std::array<ID2D1Bitmap *, 10> m_pSnakeFoodTilesBm;
 
 		FLOAT m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		D2D1_SIZE_U m_border{};
 		POINT m_minSize{ .x = 640, .y = 480 };
 		static constexpr FLOAT tileSz{ 15.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
+		D2D1_SIZE_F m_tileSzF{ tileSz, tileSz };
+
+		logic m_snakeLogic{ *this };
 
 		static LRESULT CALLBACK wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 
-		void p_calcBorder() noexcept;
+		void p_calcDpiSpecific() noexcept;
 
 	public:
 		// Disable default constructor
@@ -132,6 +140,10 @@ namespace snake
 
 		void OnRender() noexcept;
 		void OnResize(UINT width, UINT height) const noexcept;
+
+		tile makeSnakeTile(long cx, long cy) const noexcept;
+
+		void initSnakeData();
 	};
 
 }

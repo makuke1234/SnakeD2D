@@ -43,9 +43,3 @@ void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) noexcept
 		this->m_pBmBrush
 	);
 }
-
-void snake::tile::OnRender(std::vector<tile> & tiles, ID2D1HwndRenderTarget * pRT) noexcept
-{
-	for (auto & i : tiles)
-		i.OnRender(pRT);
-}
