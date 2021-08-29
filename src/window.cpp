@@ -1,5 +1,6 @@
 #include "window.hpp"
 
+#include <tgmath.h>
 
 LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
 {
@@ -114,8 +115,8 @@ void snake::Application::p_calcBorder() noexcept
 		(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
 	);
 
-	this->m_minSize.x = this->dipx(tileSz * this->fieldWidth)  + this->m_border.width;
-	this->m_minSize.y = this->dipy(tileSz * this->fieldHeight) + this->m_border.height;
+	this->m_minSize.x = ceil(this->dipxi<float>(tileSz, this->fieldWidth)  + this->m_border.width);
+	this->m_minSize.y = ceil(this->dipyi<float>(tileSz, this->fieldHeight) + this->m_border.height);
 }
 
 snake::Application::Application(PSTR cmdArgs) noexcept
@@ -193,35 +194,42 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		SWP_NOZORDER | SWP_NOMOVE
 	);
 
+	D2D1_SIZE_F tileSzF;
+	{
+		auto [rX, rY] = this->dipxy<D2D1_SIZE_F>(tileSz, tileSz);
+		float dX = rX - float(long(rX)), dY = rY - float(long(rY));
+		tileSzF = D2D1::SizeF(tileSz - this->revdipx(dX), tileSz - this->revdipy(dY));
+	}
+
 	this->m_obstacleTiles.emplace_back(
-		D2D1::SizeU(tileSz, tileSz),
+		tileSzF,
 		D2D1::SizeF(0.f, 0.f),
 		D2D1::SizeU(6, 1)
 	);
 	this->m_obstacleTiles.emplace_back(
-		D2D1::SizeU(tileSz, tileSz),
+		tileSzF,
 		D2D1::SizeF(0.f, 0.f),
 		D2D1::SizeU(1, 6)
 	);
 	this->m_obstacleTiles.emplace_back(
-		D2D1::SizeU(tileSz, tileSz),
-		D2D1::SizeF(tileSz * (this->fieldWidth - 6.f), 0.f),
+		tileSzF,
+		D2D1::SizeF(tileSzF.width * (this->fieldWidth - 6.f), 0.f),
 		D2D1::SizeU(6, 1)
 	);
 	this->m_obstacleTiles.emplace_back(
-		D2D1::SizeU(tileSz, tileSz),
-		D2D1::SizeF(tileSz * (this->fieldWidth - 1.f), 0.f),
+		tileSzF,
+		D2D1::SizeF(tileSzF.width * (this->fieldWidth - 1.f), 0.f),
 		D2D1::SizeU(1, 6)
 	);
 
 	this->m_snakeBodyTiles.emplace_back(
-		D2D1::SizeU(tileSz, tileSz),
-		D2D1::SizeF(tileSz * 10.f, tileSz),
+		tileSzF,
+		D2D1::SizeF(tileSzF.width * 10.f, tileSzF.height),
 		D2D1::SizeU(10, 35)
 	);
 	this->m_snakeHeadTile = tile(
-		D2D1::SizeU(tileSz, tileSz),
-		D2D1::SizeF(tileSz * 20.f, tileSz * 2.f),
+		tileSzF,
+		D2D1::SizeF(tileSzF.width * 20.f, tileSzF.height * 2.f),
 		D2D1::SizeU(1, 1)
 	);
 
@@ -325,14 +333,16 @@ bool snake::Application::CreateAssets() noexcept
 	
 	// Create bitmaps
 
-	UINT itWidth = tileSz, itHeight = tileSz;
+	auto [itWidth, itHeight] = this->dipxyi<D2D1_SIZE_U>(tileSz, tileSz);
 	auto borderW = (itWidth * 2) / 15;
 	auto borderH = (itHeight * 2) / 15;
 
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
 		D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+			this->m_dpiX,
+			this->m_dpiY
 		),
 		&this->m_pObstacleTileBm
 	);
@@ -345,7 +355,9 @@ bool snake::Application::CreateAssets() noexcept
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
 		D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+			this->m_dpiX,
+			this->m_dpiY
 		),
 		&this->m_pSnakeBodyTileBm
 	);
@@ -358,7 +370,9 @@ bool snake::Application::CreateAssets() noexcept
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
 		D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+			this->m_dpiX,
+			this->m_dpiY
 		),
 		&this->m_pSnakeHeadTileBm
 	);
@@ -371,7 +385,9 @@ bool snake::Application::CreateAssets() noexcept
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
 		D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE)
+			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+			this->m_dpiX,
+			this->m_dpiY
 		),
 		&this->m_pSnakeFoodTileBm
 	);

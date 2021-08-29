@@ -1,12 +1,11 @@
 #include "tiles.hpp"
 
-snake::tile::tile(D2D1_SIZE_U const & tileSz, D2D1_SIZE_F const & startpos, D2D1_SIZE_U const & numTiles) noexcept
-	: m_tileSz(tileSz),
-	m_tilesRect(D2D1::RectF(
+snake::tile::tile(D2D1_SIZE_F const & tileSz, D2D1_SIZE_F const & startpos, D2D1_SIZE_U const & numTiles) noexcept
+	: m_tilesRect(D2D1::RectF(
 		startpos.width,
 		startpos.height,
-		startpos.width + FLOAT(tileSz.width) * FLOAT(numTiles.width),
-		startpos.height + FLOAT(tileSz.height) * FLOAT(numTiles.height)
+		startpos.width + tileSz.width * FLOAT(numTiles.width),
+		startpos.height + tileSz.height * FLOAT(numTiles.height)
 	))
 {}
 snake::tile::~tile() noexcept
