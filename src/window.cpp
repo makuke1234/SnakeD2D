@@ -171,7 +171,7 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		0,
 		this->className.data(),
 		this->applicationName.data(),
-		WS_OVERLAPPEDWINDOW ^ (/*WS_SIZEBOX |*/ WS_MAXIMIZEBOX),
+		WS_OVERLAPPEDWINDOW ^ (WS_SIZEBOX | WS_MAXIMIZEBOX),
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
