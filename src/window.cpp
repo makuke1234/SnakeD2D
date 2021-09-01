@@ -558,38 +558,19 @@ bool snake::Application::CreateAssets() noexcept
 
 	std::unique_ptr<COLORREF> picMem{ new COLORREF[tMemSize / sizeof(COLORREF)] };
 
-	// Load other food tile bitmaps
-	if (!this->p_loadD2D1BitmapFromResource(
-		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE2),
-		D2D1::SizeU(itWidth, itHeight),
-		this->m_pSnakeFoodTilesBm[1],
-		picMem.get()
-	))
+	
+	for (std::size_t i = 1; i < this->m_pSnakeFoodTilesBm.size(); ++i)
 	{
-		this->Error(errid::D2DAssets);
-		return false;
-	}
-
-	if (!this->p_loadD2D1BitmapFromResource(
-		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE3),
-		D2D1::SizeU(itWidth, itHeight),
-		this->m_pSnakeFoodTilesBm[2],
-		picMem.get()
-	))
-	{
-		this->Error(errid::D2DAssets);
-		return false;
-	}
-
-	if (!this->p_loadD2D1BitmapFromResource(
-		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE4),
-		D2D1::SizeU(itWidth, itHeight),
-		this->m_pSnakeFoodTilesBm[3],
-		picMem.get()
-	))
-	{
-		this->Error(errid::D2DAssets);
-		return false;
+		if (!this->p_loadD2D1BitmapFromResource(
+			MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE1 + i),
+			D2D1::SizeU(itWidth, itHeight),
+			this->m_pSnakeFoodTilesBm[i],
+			picMem.get()
+		))
+		{
+			this->Error(errid::D2DAssets);
+			return false;
+		}
 	}
 
 
@@ -635,7 +616,7 @@ void snake::Application::OnRender() noexcept
 	// Begin also render target painting
 	this->m_pRT->BeginDraw();
 	this->m_pRT->SetTransform(D2D1::Matrix3x2F::Identity());
-	this->m_pRT->Clear(D2D1::ColorF(D2D1::ColorF::Black));
+	this->m_pRT->Clear(D2D1::ColorF(60.f / 255.f, 45.f / 255.f, 159.f / 255.f));
 
 	// Get width and height
 	/*auto [fwidth, fheight] = this->m_pRT->GetSize();

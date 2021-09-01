@@ -37,12 +37,12 @@ namespace snake
 
 		ID2D1Bitmap * m_pObstacleTileBm{ nullptr }, * m_pSnakeBodyTileBm{ nullptr },
 			* m_pSnakeHeadTileBm{ nullptr };
-		std::array<ID2D1Bitmap *, 10> m_pSnakeFoodTilesBm;
+		std::array<ID2D1Bitmap *, 9> m_pSnakeFoodTilesBm;
 
 		FLOAT m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		D2D1_SIZE_U m_border{};
 		POINT m_minSize{ .x = 640, .y = 480 };
-		static constexpr FLOAT tileSz{ 15.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
+		static constexpr FLOAT tileSz{ 18.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
 		D2D1_SIZE_F m_tileSzF{ tileSz, tileSz };
 
 		logic m_snakeLogic{ *this };

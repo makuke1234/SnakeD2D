@@ -8,6 +8,11 @@ IDB_SNAKE_FOOD_TILE1 BITMAP "assets/food1.bmp"
 IDB_SNAKE_FOOD_TILE2 BITMAP "assets/food2.bmp"
 IDB_SNAKE_FOOD_TILE3 BITMAP "assets/food3.bmp"
 IDB_SNAKE_FOOD_TILE4 BITMAP "assets/food4.bmp"
+IDB_SNAKE_FOOD_TILE5 BITMAP "assets/food5.bmp"
+IDB_SNAKE_FOOD_TILE6 BITMAP "assets/food6.bmp"
+IDB_SNAKE_FOOD_TILE7 BITMAP "assets/food7.bmp"
+IDB_SNAKE_FOOD_TILE8 BITMAP "assets/food8.bmp"
+IDB_SNAKE_FOOD_TILE9 BITMAP "assets/food9.bmp"
 
 // Sound effects
 IDW_SOUND_EAT WAVE "assets/eat.wav"
