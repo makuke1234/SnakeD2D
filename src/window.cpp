@@ -137,7 +137,7 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 
 	HBITMAP hBmp = static_cast<HBITMAP>(::LoadImageW(
 		this->m_hInst, resourceId, IMAGE_BITMAP,
-		0, 0, LR_SHARED | LR_CREATEDIBSECTION
+		0, 0, 0
 	));
 	if (hBmp == nullptr) [[unlikely]]
 		return false;
