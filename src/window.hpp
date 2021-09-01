@@ -25,6 +25,7 @@ namespace snake
 			L"Error creating Direct2D assets!"
 		};
 
+		HINSTANCE m_hInst{ nullptr };
 		PSTR m_cmdArgs;
 		HWND m_hwnd{ nullptr };
 		ID2D1Factory * m_pD2DFactory{ nullptr };
@@ -49,6 +50,13 @@ namespace snake
 		static LRESULT CALLBACK wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 
 		void p_calcDpiSpecific() noexcept;
+		bool p_loadD2D1BitmapFromResource(
+			LPCWSTR resourceId,
+			D2D1_SIZE_U const & bmSize,
+			ID2D1Bitmap *& bmRef,
+			void * opBuf = nullptr,
+			std::size_t * bufSize = nullptr
+		) noexcept;
 
 	public:
 		// Disable default constructor

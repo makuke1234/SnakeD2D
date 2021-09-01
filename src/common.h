@@ -14,16 +14,3 @@
 #include <Windows.h>
 
 #endif
-
-namespace snake
-{
-	template<class Interface>
-	void SafeRelease(Interface *& ppInstance)
-	{
-		if (ppInstance != nullptr) [[likely]]
-		{
-			ppInstance->Release();
-			ppInstance = nullptr;
-		}
-	}
-}

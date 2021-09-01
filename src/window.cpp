@@ -1,6 +1,8 @@
 #include "window.hpp"
+#include "resource.h"
 
 #include <tgmath.h>
+#include <memory>
 
 LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
 {
@@ -122,6 +124,77 @@ void snake::Application::p_calcDpiSpecific() noexcept
 	float dX = rX - float(long(rX)), dY = rY - float(long(rY));
 	this->m_tileSzF = D2D1::SizeF(tileSz - this->revdipx(dX), tileSz - this->revdipy(dY));
 }
+bool snake::Application::p_loadD2D1BitmapFromResource(
+	LPCWSTR resourceId,
+	D2D1_SIZE_U const & bmSize,
+	ID2D1Bitmap *& bmRef,
+	void * opBuf,
+	std::size_t * bufSize
+) noexcept
+{
+	std::unique_ptr<COLORREF> ourBuf;
+	COLORREF * accessBuf{ nullptr };
+
+	HBITMAP hBmp = static_cast<HBITMAP>(::LoadImageW(
+		this->m_hInst, resourceId, IMAGE_BITMAP,
+		0, 0, LR_SHARED | LR_CREATEDIBSECTION
+	));
+	if (hBmp == nullptr) [[unlikely]]
+		return false;
+
+	BITMAP bmp{};
+	::GetObject(hBmp, sizeof(BITMAP), &bmp);
+
+	BITMAPINFOHEADER bmpH{};
+	bmpH.biSize        = sizeof bmpH;
+	bmpH.biWidth       = bmp.bmWidth;
+	bmpH.biHeight      = -bmp.bmHeight;
+	bmpH.biPlanes      = 1;
+	bmpH.biBitCount    = 8 * sizeof(COLORREF);
+	bmpH.biCompression = BI_RGB;
+
+	bmpH.biSizeImage = sizeof(COLORREF) * bmp.bmWidth * bmp.bmHeight;
+
+	if (bufSize != nullptr)
+		*bufSize = bmpH.biSizeImage;
+
+
+	if (opBuf != nullptr)
+		accessBuf = static_cast<COLORREF *>(opBuf);
+	else
+	{
+		ourBuf.reset(new COLORREF[bmp.bmWidth * bmp.bmHeight]);
+		accessBuf = ourBuf.get();
+	}
+
+	auto res = ::GetDIBits(
+		CreateCompatibleDC(nullptr), hBmp, 0, bmp.bmHeight, accessBuf,
+		reinterpret_cast<BITMAPINFO *>(&bmpH), DIB_RGB_COLORS
+	);
+	::DeleteObject(hBmp);
+
+	if (!res) [[unlikely]]
+		return false;
+
+
+	auto hr = this->m_pRT->CreateBitmap(
+		D2D1::SizeU(bmp.bmWidth, bmp.bmHeight),
+		accessBuf,
+		sizeof(COLORREF) * bmp.bmWidth,
+		D2D1::BitmapProperties(
+			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
+			this->m_dpiX * bmp.bmWidth  / bmSize.width,
+			this->m_dpiY * bmp.bmHeight / bmSize.height
+		),
+		&bmRef
+	);
+
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
+
+	return true;
+}
 
 snake::Application::Application(PSTR cmdArgs) noexcept
 	: m_cmdArgs(cmdArgs)
@@ -134,6 +207,7 @@ snake::Application::~Application() noexcept
 
 bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 {
+	this->m_hInst = hInst;
 	// Init factory
 	auto hr = D2D1CreateFactory(
 		D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -368,8 +442,28 @@ bool snake::Application::CreateAssets() noexcept
 	auto borderW = (itWidth * 2) / 15;
 	auto borderH = (itHeight * 2) / 15;
 
+	// Create raw bitmap buffer
+	std::unique_ptr<COLORREF> rawArray{ new COLORREF[itWidth * itHeight] };
+	for (UINT y = 0; y < itHeight; ++y)
+	{
+		for (UINT x = 0; x < itWidth; ++x)
+		{
+			// Draw dark grey
+			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
+			{
+				rawArray.get()[y * itWidth + x] = RGB(63, 63, 63);
+			}
+			// Draw light gray
+			else
+			{
+				rawArray.get()[y * itWidth + x] = RGB(127, 127, 127);
+			}
+		}
+	}
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
+		rawArray.get(),
+		itWidth * sizeof(COLORREF),
 		D2D1::BitmapProperties(
 			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
 			this->m_dpiX,
@@ -383,8 +477,26 @@ bool snake::Application::CreateAssets() noexcept
 		return false;
 	}
 
+	for (UINT y = 0; y < itHeight; ++y)
+	{
+		for (UINT x = 0; x < itWidth; ++x)
+		{
+			// Draw black
+			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
+			{
+				rawArray.get()[y * itWidth + x] = RGB(0, 0, 0);
+			}
+			// Draw red
+			else
+			{
+				rawArray.get()[y * itWidth + x] = RGB(255, 0, 0);
+			}
+		}
+	}
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
+		rawArray.get(),
+		itWidth * sizeof(COLORREF),
 		D2D1::BitmapProperties(
 			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
 			this->m_dpiX,
@@ -398,8 +510,25 @@ bool snake::Application::CreateAssets() noexcept
 		return false;
 	}
 
+	for (UINT y = 0; y < itHeight; ++y)
+	{
+		for (UINT x = 0; x < itWidth; ++x)
+		{
+			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
+			{
+				continue;
+			}
+			// Draw yellow
+			else
+			{
+				rawArray.get()[y * itWidth + x] = RGB(255, 255, 0);
+			}
+		}
+	}
 	hr = this->m_pRT->CreateBitmap(
 		D2D1::SizeU(itWidth, itHeight),
+		rawArray.get(),
+		itWidth * sizeof(COLORREF),
 		D2D1::BitmapProperties(
 			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
 			this->m_dpiX,
@@ -413,77 +542,33 @@ bool snake::Application::CreateAssets() noexcept
 		return false;
 	}
 
-	hr = this->m_pRT->CreateBitmap(
+	// Load food tile bitmaps
+	std::size_t tMemSize{};
+	if (!this->p_loadD2D1BitmapFromResource(
+		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE1),
 		D2D1::SizeU(itWidth, itHeight),
-		D2D1::BitmapProperties(
-			D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
-			this->m_dpiX,
-			this->m_dpiY
-		),
-		&this->m_pSnakeFoodTilesBm[0]
-	);
-	if (FAILED(hr)) [[unlikely]]
+		this->m_pSnakeFoodTilesBm[0],
+		nullptr,
+		&tMemSize
+	)) [[unlikely]]
 	{
 		this->Error(errid::D2DAssets);
 		return false;
 	}
 
-	// Create raw bitmap buffer
-	auto rawArray = new COLORREF[itWidth * itHeight];
-	for (UINT y = 0; y < itHeight; ++y)
-	{
-		for (UINT x = 0; x < itWidth; ++x)
-		{
-			// Draw dark grey
-			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
-			{
-				rawArray[y * itWidth + x] = RGB(63, 63, 63);
-			}
-			// Draw light gray
-			else
-			{
-				rawArray[y * itWidth + x] = RGB(127, 127, 127);
-			}
-		}
-	}
-	this->m_pObstacleTileBm->CopyFromMemory(nullptr, rawArray, itWidth * sizeof(COLORREF));
+	std::unique_ptr<COLORREF> picMem{ new COLORREF[tMemSize / sizeof(COLORREF)] };
 
-	for (UINT y = 0; y < itHeight; ++y)
+	// Load other food tile bitmaps
+	if (!this->p_loadD2D1BitmapFromResource(
+		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE2),
+		D2D1::SizeU(itWidth, itHeight),
+		this->m_pSnakeFoodTilesBm[1],
+		picMem.get()
+	))
 	{
-		for (UINT x = 0; x < itWidth; ++x)
-		{
-			// Draw black
-			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
-			{
-				rawArray[y * itWidth + x] = RGB(0, 0, 0);
-			}
-			// Draw red
-			else
-			{
-				rawArray[y * itWidth + x] = RGB(255, 0, 0);
-			}
-		}
+		this->Error(errid::D2DAssets);
+		return false;
 	}
-	this->m_pSnakeBodyTileBm->CopyFromMemory(nullptr, rawArray, itWidth * sizeof(COLORREF));
-
-	for (UINT y = 0; y < itHeight; ++y)
-	{
-		for (UINT x = 0; x < itWidth; ++x)
-		{
-			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
-			{
-				continue;
-			}
-			// Draw yellow
-			else
-			{
-				rawArray[y * itWidth + x] = RGB(255, 255, 0);
-			}
-		}
-	}
-	this->m_pSnakeHeadTileBm->CopyFromMemory(nullptr, rawArray, itWidth * sizeof(COLORREF));
-
-	delete[] rawArray;
 
 
 
@@ -500,9 +585,9 @@ bool snake::Application::CreateAssets() noexcept
 	if (!this->m_snakeHeadTile.CreateAssets(this->m_pRT, this->m_pSnakeHeadTileBm)) [[unlikely]]
 		return false;
 
-	/*if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTileBm)) [[unlikely]]
+	if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTilesBm[1])) [[unlikely]]
 		return false;
-	*/
+	
 
 	return true;
 }
@@ -538,11 +623,10 @@ void snake::Application::OnRender() noexcept
 	tile::OnRender(this->m_obstacleTiles , this->m_pRT);
 	tile::OnRender(this->m_snakeBodyTiles, this->m_pRT);
 	this->m_snakeHeadTile.OnRender(this->m_pRT);
-	//this->m_snakeFoodTile.OnRender(this->m_pRT);
+	this->m_snakeFoodTile.OnRender(this->m_pRT);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->DestroyAssets();
-
 
 	::EndPaint(this->m_hwnd, &ps);
 }
@@ -573,4 +657,6 @@ void snake::Application::initSnakeData()
 	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(48, 25));
 	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(47, 25));
 	this->m_snakeHeadTile = this->makeSnakeTile(46, 25);
+
+	this->m_snakeFoodTile = this->makeSnakeTile(20, 19);
 }

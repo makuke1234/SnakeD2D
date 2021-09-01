@@ -1,14 +1,16 @@
 #include "common.h"
+#include "resource.h"
 
 IDI_APPLICATION ICON "assets/icon.ico"
 
 // Food tiles
-SNAKE_FOOD_TILE1 IMAGE "assets/food1.png"
+IDB_SNAKE_FOOD_TILE1 BITMAP "assets/food1.bmp"
+IDB_SNAKE_FOOD_TILE2 BITMAP "assets/food2.bmp"
 
 // Sound effects
-SOUND_EAT WAVE "assets/eat.wav"
-SOUND_GAME_OVER WAVE "assets/game_over.wav"
-SOUND_WIN WAVE "assets/tada.wav"
+IDW_SOUND_EAT WAVE "assets/eat.wav"
+IDW_SOUND_GAME_OVER WAVE "assets/game_over.wav"
+IDW_SOUND_WIN WAVE "assets/tada.wav"
 
 #include <winver.h>
 VS_VERSION_INFO		VERSIONINFO
