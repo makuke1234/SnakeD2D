@@ -570,6 +570,28 @@ bool snake::Application::CreateAssets() noexcept
 		return false;
 	}
 
+	if (!this->p_loadD2D1BitmapFromResource(
+		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE3),
+		D2D1::SizeU(itWidth, itHeight),
+		this->m_pSnakeFoodTilesBm[2],
+		picMem.get()
+	))
+	{
+		this->Error(errid::D2DAssets);
+		return false;
+	}
+
+	if (!this->p_loadD2D1BitmapFromResource(
+		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE4),
+		D2D1::SizeU(itWidth, itHeight),
+		this->m_pSnakeFoodTilesBm[3],
+		picMem.get()
+	))
+	{
+		this->Error(errid::D2DAssets);
+		return false;
+	}
+
 
 
 	for (auto & i : this->m_obstacleTiles)

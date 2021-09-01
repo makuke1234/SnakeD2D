@@ -6,6 +6,8 @@ IDI_APPLICATION ICON "assets/icon.ico"
 // Food tiles
 IDB_SNAKE_FOOD_TILE1 BITMAP "assets/food1.bmp"
 IDB_SNAKE_FOOD_TILE2 BITMAP "assets/food2.bmp"
+IDB_SNAKE_FOOD_TILE3 BITMAP "assets/food3.bmp"
+IDB_SNAKE_FOOD_TILE4 BITMAP "assets/food4.bmp"
 
 // Sound effects
 IDW_SOUND_EAT WAVE "assets/eat.wav"
