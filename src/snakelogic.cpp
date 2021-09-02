@@ -8,7 +8,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 	while (!ti->end)
 	{
 		Sleep(500);
-		ti->This.moveSnake(ti->This.snakeDirection);
+		ti->This.moveSnake(ti->This.m_snakeDirection);
 		::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
 	}
 
@@ -22,6 +22,8 @@ snake::logic::logic(Application & parentRef) noexcept
 
 void snake::logic::moveSnake(direction dir) noexcept
 {
+	this->m_snakeDirection = dir;
+
 	auto prevtile = this->m_parentRef.m_snakeHeadTile;
 	auto [uposx, uposy] = prevtile.getCoords(this->m_parentRef.m_tileSzF);
 	std::intptr_t posx{ std::intptr_t(uposx) }, posy{ std::intptr_t(uposy) };

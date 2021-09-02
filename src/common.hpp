@@ -27,4 +27,16 @@ namespace snake
 			ppInstance = nullptr;
 		}
 	}
+
+	template<class EnumC>
+	[[nodiscard]] constexpr std::underlying_type_t<EnumC> enumDiff(EnumC e1, EnumC e2) noexcept
+	{
+		using T = std::underlying_type_t<EnumC>;
+		return T(e2) > T(e1) ? (T(e2) - T(e1)) : (T(e1) - T(e2));
+	}
+	template<class T>
+	[[nodiscard]] constexpr bool enumIsClose(T in, T limit) noexcept
+	{
+		return (in == 1 || in == (limit - 1));
+	}
 }

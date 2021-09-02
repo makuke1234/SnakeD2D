@@ -34,6 +34,10 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 	case WM_PAINT:
 		This->OnRender();
 		break;
+	case WM_KEYDOWN:
+		return This->OnKeyPress(wp, lp);
+	case WM_KEYUP:
+		return This->OnKeyRelease(wp, lp);
 	case WM_SIZING:
 	{
 		auto r = reinterpret_cast<RECT *>(lp);
@@ -77,7 +81,6 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 	{
 		This->OnResize(LOWORD(lp), HIWORD(lp));
 		break;
-
 	}
 	case WM_DPICHANGED:
 	{
@@ -631,22 +634,58 @@ void snake::Application::OnRender() noexcept
 	*/
 
 	tile::OnRender(this->m_obstacleTiles , this->m_pRT);
+	// Render food tile first
+	this->m_snakeFoodTile.OnRender(this->m_pRT);
+
 	tile::OnRender(this->m_snakeBodyTiles, this->m_pRT);
 	this->m_snakeHeadTile.OnRender(this->m_pRT);
-	this->m_snakeFoodTile.OnRender(this->m_pRT);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->DestroyAssets();
 
 	::EndPaint(this->m_hwnd, &ps);
 }
-
 void snake::Application::OnResize(UINT width, UINT height) const noexcept
 {
 	if (this->m_pRT) [[likely]]
 	{
 		this->m_pRT->Resize(D2D1::SizeU(width, height));
 	}
+}
+
+LRESULT snake::Application::OnKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) noexcept
+{
+	logic::direction dir{};
+	switch (wp)
+	{
+	case VK_LEFT:
+		dir = logic::direction::left;
+		break;
+	case VK_RIGHT:
+		dir = logic::direction::right;
+		break;
+	case VK_UP:
+		dir = logic::direction::up;
+		break;
+	case VK_DOWN:
+		dir = logic::direction::down;
+		break;
+	default:
+		return 0;
+	}
+
+	// Check if the user wants to make a valid move
+	if (dir != this->m_snakeLogic.m_snakeDirection &&
+		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_snakeDirection), logic::direction_enum_size))
+	{
+		this->m_snakeLogic.moveSnake(dir);
+	}
+
+	return 0;
+}
+LRESULT snake::Application::OnKeyRelease(WPARAM wp, LPARAM lp) noexcept
+{
+	return ::DefWindowProcW(this->m_hwnd, WM_KEYUP, wp, lp);
 }
 
 snake::tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept

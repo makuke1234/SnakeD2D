@@ -9,17 +9,20 @@ namespace snake
 	class logic
 	{
 	public:
-		enum class direction : std::uint8_t
+		enum class direction : std::int8_t
 		{
 			left,
 			up,
 			right,
 			down
 		};
+		static constexpr auto direction_enum_size{ std::underlying_type_t<direction>(4) };
 
 	private:
+		friend class snake::Application;
+
 		snake::Application & m_parentRef;
-		direction snakeDirection{ direction::left };
+		direction m_snakeDirection{ direction::left };
 
 		struct p_snakeLoopThreadInfo
 		{

@@ -151,6 +151,9 @@ namespace snake
 		void OnRender() noexcept;
 		void OnResize(UINT width, UINT height) const noexcept;
 
+		LRESULT OnKeyPress(WPARAM wp, LPARAM lp) noexcept;
+		LRESULT OnKeyRelease(WPARAM wp, LPARAM lp) noexcept;
+
 		tile makeSnakeTile(long cx, long cy) const noexcept;
 		void moveTile(tile & t, long cx, long cy) const noexcept;
 
