@@ -22,6 +22,7 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 				snake::Application::sError(L"Error initialising window!");
 				::DestroyWindow(hwnd);
 			}
+
 			return 0;
 		}
 		else [[unlikely]]
@@ -345,8 +346,14 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		return false;
 	}
 
+
 	::ShowWindow(this->m_hwnd, nCmdShow);
 	::UpdateWindow(this->m_hwnd);
+
+	if (!this->m_snakeLogic.startSnakeLoop()) [[unlikely]]
+	{
+		return false;
+	}
 
 	return true;
 }
@@ -451,12 +458,12 @@ bool snake::Application::CreateAssets() noexcept
 			// Draw dark grey
 			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
 			{
-				rawArray.get()[y * itWidth + x] = RGB(63, 63, 63);
+				rawArray.get()[y * itWidth + x] = RGB(70, 63, 47);
 			}
 			// Draw light gray
 			else
 			{
-				rawArray.get()[y * itWidth + x] = RGB(127, 127, 127);
+				rawArray.get()[y * itWidth + x] = RGB(193, 184, 162);
 			}
 		}
 	}
@@ -484,12 +491,12 @@ bool snake::Application::CreateAssets() noexcept
 			// Draw black
 			if (x < borderW || x >= (itWidth - borderW) || y < borderH || y >= (itHeight - borderH))
 			{
-				rawArray.get()[y * itWidth + x] = RGB(0, 0, 0);
+				rawArray.get()[y * itWidth + x] = RGB(29, 44, 63);
 			}
 			// Draw red
 			else
 			{
-				rawArray.get()[y * itWidth + x] = RGB(255, 0, 0);
+				rawArray.get()[y * itWidth + x] = RGB(255, 50, 0);
 			}
 		}
 	}
@@ -521,7 +528,7 @@ bool snake::Application::CreateAssets() noexcept
 			// Draw yellow
 			else
 			{
-				rawArray.get()[y * itWidth + x] = RGB(255, 255, 0);
+				rawArray.get()[y * itWidth + x] = RGB(255, 187, 30);
 			}
 		}
 	}
@@ -588,7 +595,7 @@ bool snake::Application::CreateAssets() noexcept
 	if (!this->m_snakeHeadTile.CreateAssets(this->m_pRT, this->m_pSnakeHeadTileBm)) [[unlikely]]
 		return false;
 
-	if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTilesBm[1])) [[unlikely]]
+	if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTilesBm[5])) [[unlikely]]
 		return false;
 	
 
@@ -650,16 +657,20 @@ snake::tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept
 		D2D1::SizeU(1, 1)
 	);
 }
+void snake::Application::moveTile(tile & t, long cx, long cy) const noexcept
+{
+	t.move(D2D1::SizeF(this->m_tileSzF.width * float(cx), this->m_tileSzF.height * float(cy)));
+}
 
 void snake::Application::initSnakeData()
 {
 	this->m_snakeBodyTiles.clear();
 
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(50, 25));
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(49, 25));
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(48, 25));
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(47, 25));
 	this->m_snakeHeadTile = this->makeSnakeTile(46, 25);
+	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(47, 25));
+	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(48, 25));
+	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(49, 25));
+	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(50, 25));
 
 	this->m_snakeFoodTile = this->makeSnakeTile(20, 19);
 }

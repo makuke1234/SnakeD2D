@@ -16,6 +16,29 @@ namespace snake
 	public:
 		tile() noexcept = default;
 		tile(D2D1_SIZE_F const & tileSz, D2D1_SIZE_F const & startpos, D2D1_SIZE_U const & numTiles) noexcept;
+		constexpr tile(tile const & other) noexcept
+			: m_tilesRect(other.m_tilesRect)
+		{}
+		constexpr tile(tile && other) noexcept
+			: m_tilesRect(other.m_tilesRect), m_pBmBrush(other.m_pBmBrush)
+		{
+			other.m_tilesRect = {};
+			other.m_pBmBrush = nullptr;
+		}
+		tile & operator=(tile const & other) noexcept
+		{
+			this->m_tilesRect = other.m_tilesRect;
+			return *this;
+		}
+		tile & operator=(tile && other) noexcept
+		{
+			this->~tile();
+			this->m_tilesRect = other.m_tilesRect;
+			this->m_pBmBrush = other.m_pBmBrush;
+			other.m_tilesRect = {};
+			other.m_pBmBrush = nullptr;
+			return *this;
+		}
 		~tile() noexcept;
 
 		bool CreateAssets(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBitmap) noexcept;
@@ -30,5 +53,8 @@ namespace snake
 			for (auto & i : tiles)
 				i.OnRender(pRT);
 		}
+
+		[[nodiscard]] D2D1_SIZE_U getCoords(D2D1_SIZE_F const & tileSz) const noexcept;
+		void move(D2D1_SIZE_F const & newpos) noexcept;
 	};
 }

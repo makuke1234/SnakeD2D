@@ -12,6 +12,8 @@ namespace snake
 	class Application
 	{
 	private:
+		friend class logic;
+
 		static constexpr std::wstring_view applicationName{ L"SnakeD2D" },
 			className{ L"SnakeDirect2DClass" };
 
@@ -150,6 +152,7 @@ namespace snake
 		void OnResize(UINT width, UINT height) const noexcept;
 
 		tile makeSnakeTile(long cx, long cy) const noexcept;
+		void moveTile(tile & t, long cx, long cy) const noexcept;
 
 		void initSnakeData();
 	};

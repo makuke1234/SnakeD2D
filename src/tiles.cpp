@@ -43,3 +43,19 @@ void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) noexcept
 		this->m_pBmBrush
 	);
 }
+
+[[nodiscard]] D2D1_SIZE_U snake::tile::getCoords(D2D1_SIZE_F const & tileSz) const noexcept
+{
+	return D2D1::SizeU(this->m_tilesRect.left / tileSz.width + 0.5f, this->m_tilesRect.top / tileSz.height + 0.5f);
+}
+void snake::tile::move(D2D1_SIZE_F const & newpos) noexcept
+{
+	auto xdelta = this->m_tilesRect.right  - this->m_tilesRect.left,
+		 ydelta = this->m_tilesRect.bottom - this->m_tilesRect.top;
+
+	this->m_tilesRect.left   = newpos.width;
+	this->m_tilesRect.top    = newpos.height;
+	this->m_tilesRect.right  = newpos.width  + xdelta;
+	this->m_tilesRect.bottom = newpos.height + ydelta;
+}
+
