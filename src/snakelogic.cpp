@@ -7,9 +7,14 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 	while (!ti->end)
 	{
-		Sleep(500);
-		ti->This.moveSnake(ti->This.m_snakeDirection);
+		while (ti->time > 0.f)
+		{
+			Sleep(50);
+			ti->time -= .05f;
+		}
+		ti->This.moveSnake();
 		::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
+		ti->time = ti->curTime;
 	}
 
 	ti->hThread = nullptr;
@@ -20,15 +25,18 @@ snake::logic::logic(Application & parentRef) noexcept
 	: m_parentRef(parentRef)
 {}
 
-void snake::logic::moveSnake(direction dir) noexcept
+void snake::logic::changeDirection(direction newdir) noexcept
 {
-	this->m_snakeDirection = dir;
+	this->m_snakeDirection = newdir;
+}
+void snake::logic::moveSnake() const noexcept
+{
 
-	auto prevtile = this->m_parentRef.m_snakeHeadTile;
+	auto prevtile = this->m_parentRef.m_tiles.snakeHeadTile;
 	auto [uposx, uposy] = prevtile.getCoords(this->m_parentRef.m_tileSzF);
 	std::intptr_t posx{ std::intptr_t(uposx) }, posy{ std::intptr_t(uposy) };
 	
-	switch (dir)
+	switch (this->m_snakeDirection)
 	{
 	case direction::left:
 		--posx;
@@ -57,17 +65,17 @@ void snake::logic::moveSnake(direction dir) noexcept
 	else if (posy >= ipHeight)
 		posy -= ipHeight;
 
-	this->m_parentRef.moveTile(this->m_parentRef.m_snakeHeadTile, posx, posy);
-	this->m_parentRef.m_snakeBodyTiles.emplace_front(std::move(this->m_parentRef.m_snakeBodyTiles.back()));
-	this->m_parentRef.m_snakeBodyTiles.pop_back();
-	this->m_parentRef.m_snakeBodyTiles.front() = prevtile;
+	this->m_parentRef.moveTile(this->m_parentRef.m_tiles.snakeHeadTile, posx, posy);
+	this->m_parentRef.m_tiles.snakeBodyTiles.emplace_front(std::move(this->m_parentRef.m_tiles.snakeBodyTiles.back()));
+	this->m_parentRef.m_tiles.snakeBodyTiles.pop_back();
+	this->m_parentRef.m_tiles.snakeBodyTiles.front() = prevtile;
 }
-void snake::logic::moveAndGrowSnake(direction dir)
+void snake::logic::moveAndGrowSnake() const
 {
-	auto tail{ this->m_parentRef.m_snakeBodyTiles.back() };
-	tail.CreateAssets(this->m_parentRef.m_pRT, this->m_parentRef.m_pSnakeBodyTileBm);
-	this->moveSnake(dir);
-	this->m_parentRef.m_snakeBodyTiles.emplace_back(std::move(tail));
+	auto tail{ this->m_parentRef.m_tiles.snakeBodyTiles.back() };
+	tail.CreateAssets(this->m_parentRef.m_bmpBrushes.snakeBodyTile);
+	this->moveSnake();
+	this->m_parentRef.m_tiles.snakeBodyTiles.emplace_back(std::move(tail));
 }
 
 bool snake::logic::startSnakeLoop() noexcept
@@ -101,4 +109,8 @@ bool snake::logic::stopSnakeLoop() noexcept
 		Sleep(1);
 	
 	return true;
+}
+void snake::logic::stepNow() noexcept
+{
+	this->m_ti.time = 0.f;
 }

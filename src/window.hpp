@@ -33,13 +33,34 @@ namespace snake
 		ID2D1Factory * m_pD2DFactory{ nullptr };
 		ID2D1HwndRenderTarget * m_pRT{ nullptr };
 
-		std::vector<tile> m_obstacleTiles;
-		std::deque<tile> m_snakeBodyTiles;
-		tile m_snakeHeadTile, m_snakeFoodTile;
+		struct tilesStruct
+		{
+			std::vector<tile> obstacleTiles;
+			std::deque<tile> snakeBodyTiles;
+			tile snakeHeadTile, snakeFoodTile;
 
-		ID2D1Bitmap * m_pObstacleTileBm{ nullptr }, * m_pSnakeBodyTileBm{ nullptr },
-			* m_pSnakeHeadTileBm{ nullptr };
-		std::array<ID2D1Bitmap *, 9> m_pSnakeFoodTilesBm;
+			void DestroyAssets() noexcept;
+		} m_tiles;
+		
+		static constexpr std::size_t s_numFoodTiles{ 9 };
+
+		struct bitmapsStruct
+		{		
+			ID2D1Bitmap * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
+				* snakeHeadTile{ nullptr };
+			std::array<ID2D1Bitmap *, s_numFoodTiles> snakeFoodTiles;
+
+			void DestroyAssets() noexcept;
+		} m_bmps;
+		struct bitmapBrushesStruct
+		{
+			ID2D1BitmapBrush * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
+				* snakeHeadTile{ nullptr };
+			std::array<ID2D1BitmapBrush *, s_numFoodTiles> snakeFoodTiles;
+			
+			bool CreateAssets(ID2D1HwndRenderTarget * pRT, bitmapsStruct const & bmps) noexcept;
+			void DestroyAssets() noexcept;
+		} m_bmpBrushes;
 
 		FLOAT m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		D2D1_SIZE_U m_border{};

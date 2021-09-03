@@ -28,13 +28,14 @@ namespace snake
 		}
 	}
 
-	template<class EnumC>
-	[[nodiscard]] constexpr std::underlying_type_t<EnumC> enumDiff(EnumC e1, EnumC e2) noexcept
+	template<class Enum>
+	[[nodiscard]] constexpr std::underlying_type_t<Enum> enumDiff(Enum e1, Enum e2) noexcept
 	{
-		using T = std::underlying_type_t<EnumC>;
+		using T = std::underlying_type_t<Enum>;
 		return T(e2) > T(e1) ? (T(e2) - T(e1)) : (T(e1) - T(e2));
 	}
 	template<class T>
+		requires std::is_integral_v<T>
 	[[nodiscard]] constexpr bool enumIsClose(T in, T limit) noexcept
 	{
 		return (in == 1 || in == (limit - 1));

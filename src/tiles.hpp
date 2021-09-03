@@ -41,16 +41,17 @@ namespace snake
 		}
 		~tile() noexcept;
 
-		bool CreateAssets(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBitmap) noexcept;
+		[[nodiscard]] static ID2D1BitmapBrush * CreateBmBrush(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBm) noexcept;
+		void CreateAssets(ID2D1BitmapBrush * pBmBrush) noexcept;
 		void DestroyAssets() noexcept;
 
-		void OnRender(ID2D1HwndRenderTarget * pRT) noexcept;
+		void OnRender(ID2D1HwndRenderTarget * pRT) const noexcept;
 
 		template<class VecT>
 			requires std::is_same_v<std::decay_t<decltype(VecT()[0])>, tile>
-		static void OnRender(VecT & tiles, ID2D1HwndRenderTarget * pRT) noexcept
+		static void OnRender(VecT const & tiles, ID2D1HwndRenderTarget * pRT) noexcept
 		{
-			for (auto & i : tiles)
+			for (auto const & i : tiles)
 				i.OnRender(pRT);
 		}
 

@@ -111,6 +111,57 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 	return 0;
 }
 
+void snake::Application::tilesStruct::DestroyAssets() noexcept
+{
+	for (auto & i : this->obstacleTiles)
+		i.DestroyAssets();
+	for (auto & i : this->snakeBodyTiles)
+		i.DestroyAssets();
+	this->snakeHeadTile.DestroyAssets();
+	this->snakeFoodTile.DestroyAssets();
+}
+
+void snake::Application::bitmapsStruct::DestroyAssets() noexcept
+{
+	snake::SafeRelease(this->obstacleTile);
+	snake::SafeRelease(this->snakeBodyTile);
+	snake::SafeRelease(this->snakeHeadTile);
+	for (auto & i : this->snakeFoodTiles)
+	{
+		snake::SafeRelease(i);
+	}
+}
+
+bool snake::Application::bitmapBrushesStruct::CreateAssets(
+	ID2D1HwndRenderTarget * pRT,
+	Application::bitmapsStruct const & bmps
+) noexcept
+{
+	if ((this->obstacleTile = tile::CreateBmBrush(pRT, bmps.obstacleTile)) == nullptr) [[unlikely]]
+		return false;
+	if ((this->snakeBodyTile = tile::CreateBmBrush(pRT, bmps.snakeBodyTile)) == nullptr) [[unlikely]]
+		return false;
+	if ((this->snakeHeadTile = tile::CreateBmBrush(pRT, bmps.snakeHeadTile)) == nullptr) [[unlikely]]
+		return false;
+	for (std::size_t i = 0; i < this->snakeFoodTiles.size(); ++i)
+	{
+		if ((this->snakeFoodTiles[i] = tile::CreateBmBrush(pRT, bmps.snakeFoodTiles[i])) == nullptr) [[unlikely]]
+			return false;
+	}
+
+	return true;
+}
+void snake::Application::bitmapBrushesStruct::DestroyAssets() noexcept
+{
+	snake::SafeRelease(this->obstacleTile);
+	snake::SafeRelease(this->snakeBodyTile);
+	snake::SafeRelease(this->snakeHeadTile);
+	for (auto & i : this->snakeFoodTiles)
+	{
+		snake::SafeRelease(i);
+	}
+}
+
 void snake::Application::p_calcDpiSpecific() noexcept
 {
 	RECT clientR{}, windowR{};
@@ -277,43 +328,43 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 	);
 
 	// Upper left
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(0.f, 0.f),
 		D2D1::SizeU(6, 1)
 	);
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(0.f, this->m_tileSzF.height),
 		D2D1::SizeU(1, 5)
 	);
 
 	// Upper right
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(this->m_tileSzF.width * (this->fieldWidth - 6.f), 0.f),
 		D2D1::SizeU(6, 1)
 	);
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(this->m_tileSzF.width * (this->fieldWidth - 1.f), this->m_tileSzF.height),
 		D2D1::SizeU(1, 5)
 	);
 
 	// Bottom left
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(0.f, this->m_tileSzF.height * (this->fieldHeight - 1.f)),
 		D2D1::SizeU(6, 1)
 	);
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(0.f, this->m_tileSzF.height * (this->fieldHeight - 6.f)),
 		D2D1::SizeU(1, 5)
 	);
 
 	// Bottom right
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(
 			this->m_tileSzF.width  * (this->fieldWidth  - 6.f),
@@ -321,7 +372,7 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 		),
 		D2D1::SizeU(6, 1)
 	);
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(
 			this->m_tileSzF.width  * (this->fieldWidth  - 1.f),
@@ -331,7 +382,7 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 	);
 
 	// Center piece
-	this->m_obstacleTiles.emplace_back(
+	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		D2D1::SizeF(
 			this->m_tileSzF.width  * float(long(this->fieldWidth  - 8.f) / 2),
@@ -479,7 +530,7 @@ bool snake::Application::CreateAssets() noexcept
 			this->m_dpiX,
 			this->m_dpiY
 		),
-		&this->m_pObstacleTileBm
+		&this->m_bmps.obstacleTile
 	);
 	if (FAILED(hr)) [[unlikely]]
 	{
@@ -512,7 +563,7 @@ bool snake::Application::CreateAssets() noexcept
 			this->m_dpiX,
 			this->m_dpiY
 		),
-		&this->m_pSnakeBodyTileBm
+		&this->m_bmps.snakeBodyTile
 	);
 	if (FAILED(hr)) [[unlikely]]
 	{
@@ -544,7 +595,7 @@ bool snake::Application::CreateAssets() noexcept
 			this->m_dpiX,
 			this->m_dpiY
 		),
-		&this->m_pSnakeHeadTileBm
+		&this->m_bmps.snakeHeadTile
 	);
 	if (FAILED(hr)) [[unlikely]]
 	{
@@ -557,7 +608,7 @@ bool snake::Application::CreateAssets() noexcept
 	if (!this->p_loadD2D1BitmapFromResource(
 		MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE1),
 		D2D1::SizeU(itWidth, itHeight),
-		this->m_pSnakeFoodTilesBm[0],
+		this->m_bmps.snakeFoodTiles[0],
 		nullptr,
 		&tMemSize
 	)) [[unlikely]]
@@ -569,12 +620,12 @@ bool snake::Application::CreateAssets() noexcept
 	std::unique_ptr<COLORREF> picMem{ new COLORREF[tMemSize / sizeof(COLORREF)] };
 
 	
-	for (std::size_t i = 1; i < this->m_pSnakeFoodTilesBm.size(); ++i)
+	for (std::size_t i = 1; i < this->m_bmps.snakeFoodTiles.size(); ++i)
 	{
 		if (!this->p_loadD2D1BitmapFromResource(
 			MAKEINTRESOURCEW(IDB_SNAKE_FOOD_TILE1 + i),
 			D2D1::SizeU(itWidth, itHeight),
-			this->m_pSnakeFoodTilesBm[i],
+			this->m_bmps.snakeFoodTiles[i],
 			picMem.get()
 		))
 		{
@@ -583,35 +634,37 @@ bool snake::Application::CreateAssets() noexcept
 		}
 	}
 
-
-
-	for (auto & i : this->m_obstacleTiles)
+	// Create bitmap brushes
+	if (!this->m_bmpBrushes.CreateAssets(this->m_pRT, this->m_bmps)) [[unlikely]]
 	{
-		if (!i.CreateAssets(this->m_pRT, this->m_pObstacleTileBm)) [[unlikely]]
-			return false;
-	}
-	for (auto & i : this->m_snakeBodyTiles)
-	{
-		if (!i.CreateAssets(this->m_pRT, this->m_pSnakeBodyTileBm)) [[unlikely]]
-			return false;
-	}
-	if (!this->m_snakeHeadTile.CreateAssets(this->m_pRT, this->m_pSnakeHeadTileBm)) [[unlikely]]
+		this->Error(L"Error creating D2D Assets (bitmap brushes)");
 		return false;
+	}
 
-	if (!this->m_snakeFoodTile.CreateAssets(this->m_pRT, this->m_pSnakeFoodTilesBm[5])) [[unlikely]]
-		return false;
+	for (auto & i : this->m_tiles.obstacleTiles)
+	{
+		i.CreateAssets(this->m_bmpBrushes.obstacleTile);
+	}
+	for (auto & i : this->m_tiles.snakeBodyTiles)
+	{
+		i.CreateAssets(this->m_bmpBrushes.snakeBodyTile);
+	}
+	this->m_tiles.snakeHeadTile.CreateAssets(this->m_bmpBrushes.snakeHeadTile);
+
+	this->m_tiles.snakeFoodTile.CreateAssets(this->m_bmpBrushes.snakeFoodTiles[5]);
 	
 
 	return true;
 }
 void snake::Application::DestroyAssets() noexcept
 {
-	for (auto & i : this->m_obstacleTiles)
-		i.DestroyAssets();
-	for (auto & i : this->m_snakeBodyTiles)
-		i.DestroyAssets();
-	this->m_snakeHeadTile.DestroyAssets();
-	this->m_snakeFoodTile.DestroyAssets();
+	// Reset tiles' resources
+	this->m_tiles.DestroyAssets();
+
+	// Destroy bitmap brushes
+	this->m_bmpBrushes.DestroyAssets();
+	// Destroy bitmaps
+	this->m_bmps.DestroyAssets();
 
 	snake::SafeRelease(this->m_pRT);
 }
@@ -633,12 +686,12 @@ void snake::Application::OnRender() noexcept
 	auto [width, height] = POINT{ LONG(fwidth), LONG(fheight) };
 	*/
 
-	tile::OnRender(this->m_obstacleTiles , this->m_pRT);
+	tile::OnRender(this->m_tiles.obstacleTiles , this->m_pRT);
 	// Render food tile first
-	this->m_snakeFoodTile.OnRender(this->m_pRT);
+	this->m_tiles.snakeFoodTile.OnRender(this->m_pRT);
 
-	tile::OnRender(this->m_snakeBodyTiles, this->m_pRT);
-	this->m_snakeHeadTile.OnRender(this->m_pRT);
+	tile::OnRender(this->m_tiles.snakeBodyTiles, this->m_pRT);
+	this->m_tiles.snakeHeadTile.OnRender(this->m_pRT);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->DestroyAssets();
@@ -678,7 +731,8 @@ LRESULT snake::Application::OnKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 	if (dir != this->m_snakeLogic.m_snakeDirection &&
 		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_snakeDirection), logic::direction_enum_size))
 	{
-		this->m_snakeLogic.moveSnake(dir);
+		this->m_snakeLogic.changeDirection(dir);
+		this->m_snakeLogic.stepNow();
 	}
 
 	return 0;
@@ -703,13 +757,13 @@ void snake::Application::moveTile(tile & t, long cx, long cy) const noexcept
 
 void snake::Application::initSnakeData()
 {
-	this->m_snakeBodyTiles.clear();
+	this->m_tiles.snakeBodyTiles.clear();
 
-	this->m_snakeHeadTile = this->makeSnakeTile(46, 25);
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(47, 25));
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(48, 25));
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(49, 25));
-	this->m_snakeBodyTiles.emplace_back(this->makeSnakeTile(50, 25));
+	this->m_tiles.snakeHeadTile = this->makeSnakeTile(46, 25);
+	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(47, 25));
+	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(48, 25));
+	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(49, 25));
+	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(50, 25));
 
-	this->m_snakeFoodTile = this->makeSnakeTile(20, 19);
+	this->m_tiles.snakeFoodTile = this->makeSnakeTile(20, 19);
 }

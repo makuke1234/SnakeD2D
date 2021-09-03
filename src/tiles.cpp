@@ -13,30 +13,34 @@ snake::tile::~tile() noexcept
 	this->DestroyAssets();
 }
 
-bool snake::tile::CreateAssets(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBitmap) noexcept
+[[nodiscard]] ID2D1BitmapBrush * snake::tile::CreateBmBrush(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBm) noexcept
 {
-	if (this->m_pBmBrush)
-		return true;
-
+	ID2D1BitmapBrush * bmBrush{ nullptr };
 	auto hr = pRT->CreateBitmapBrush(
-		pBitmap,
-		&this->m_pBmBrush
+		pBm,
+		&bmBrush
 	);
-	if (FAILED(hr)) [[unlikely]]
-		return false;
+	if (SUCCEEDED(hr))
+	{
+		bmBrush->SetExtendModeX(D2D1_EXTEND_MODE_WRAP);
+		bmBrush->SetExtendModeY(D2D1_EXTEND_MODE_WRAP);
+	}
 
-	// Set extend mode to wrap / "tile"
-	this->m_pBmBrush->SetExtendModeX(D2D1_EXTEND_MODE_WRAP);
-	this->m_pBmBrush->SetExtendModeY(D2D1_EXTEND_MODE_WRAP);
 
-	return true;
+	return bmBrush;
+}
+void snake::tile::CreateAssets(ID2D1BitmapBrush * pBmBrush) noexcept
+{
+	if (this->m_pBmBrush != nullptr)
+		return;
+	this->m_pBmBrush = pBmBrush;	
 }
 void snake::tile::DestroyAssets() noexcept
 {
-	snake::SafeRelease(this->m_pBmBrush);
+	this->m_pBmBrush = nullptr;
 }
 
-void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) noexcept
+void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) const noexcept
 {
 	pRT->FillRectangle(
 		this->m_tilesRect,
@@ -46,7 +50,7 @@ void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) noexcept
 
 [[nodiscard]] D2D1_SIZE_U snake::tile::getCoords(D2D1_SIZE_F const & tileSz) const noexcept
 {
-	return D2D1::SizeU(this->m_tilesRect.left / tileSz.width + 0.5f, this->m_tilesRect.top / tileSz.height + 0.5f);
+	return D2D1::SizeU(this->m_tilesRect.left / tileSz.width, this->m_tilesRect.top / tileSz.height);
 }
 void snake::tile::move(D2D1_SIZE_F const & newpos) noexcept
 {

@@ -29,6 +29,7 @@ namespace snake
 			logic & This;
 			HANDLE hThread{ nullptr };
 			bool end{ false };
+			float time{ 0.f }, curTime{ .5f };
 		} m_ti{ *this };
 		static constexpr std::size_t p_snakeLoopThreadStackSize{ 10 * sizeof(std::size_t) };
 		static DWORD WINAPI sp_snakeLoopThread(LPVOID lp) noexcept;
@@ -37,8 +38,9 @@ namespace snake
 		logic() = delete;
 		logic(Application & parentRef) noexcept;
 
-		void moveSnake(direction dir) noexcept;
-		void moveAndGrowSnake(direction dir);
+		void changeDirection(direction newdir) noexcept;
+		void moveSnake() const noexcept;
+		void moveAndGrowSnake() const;
 
 		//
 		//	Starts snake loop thread
@@ -50,6 +52,7 @@ namespace snake
 		//	@return 'true' if thread was running, 'false' if thread was already terminated
 		//
 		bool stopSnakeLoop() noexcept;
+		void stepNow() noexcept;
 	};
 
 }
