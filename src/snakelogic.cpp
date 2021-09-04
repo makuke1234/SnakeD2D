@@ -17,11 +17,51 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 		switch (ti->mode)
 		{
 		case snakeInfo::modes::normal:
-			ti->This.moveSnake();
+		{
 			// Check for "bad" collisions
+			bool collides{ false };
+			auto const & headRect = ti->This.m_parentRef.m_tiles.snakeHeadTile.getBounds();
+			for (auto const & i : ti->This.m_parentRef.m_tiles.obstacleTiles)
+			{
+				if (i.collides(headRect))
+				{
+					collides = true;
+					break;
+				}
+			}
+			if (!collides)
+			{
+				for (auto const & i : ti->This.m_parentRef.m_tiles.snakeBodyTiles)
+				{
+					if (i.collides(headRect))
+					{
+						collides = true;
+						break;
+					}
+				}
+			}
+
+			if (collides)
+			{
+				ti->mode = snakeInfo::modes::game_over;
+				ti->scoring.time = 0.f;
+				break;
+			}
 
 			// Check for "good" collisions with food
-			
+			if (ti->This.m_parentRef.m_tiles.snakeFoodTile.collides(headRect))
+			{
+				// Eat food and generate new
+
+				// Grow snake
+				ti->This.moveAndGrowSnake();
+			}
+			else
+			{
+				// Move snake normally
+				ti->This.moveSnake();
+			}
+
 			// After checking "good" collisions, check score
 			if (ti->scoring.score >= ti->scoring.winningScore)
 			{
@@ -29,6 +69,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 				ti->scoring.time = 0.f;
 			}
 			break;
+		}
 		case snakeInfo::modes::game_over:
 			// Draw game over text
 
@@ -38,7 +79,11 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			// Wait for mode change
 			while (ti->mode == snakeInfo::modes::game_over)
+			{
 				Sleep(50);
+				if (ti->end)
+					goto sp_snakeLoopThreadFinish;
+			}
 
 			break;
 		case snakeInfo::modes::win:
@@ -50,13 +95,19 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			// Wait for mode change
 			while (ti->mode == snakeInfo::modes::win)
+			{
 				Sleep(50);
-			
+				if (ti->end)
+					goto sp_snakeLoopThreadFinish;
+			}
+
 			break;
 		}
 		// Update screen
 		::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
 	}
+
+sp_snakeLoopThreadFinish: ;
 
 	ti->hThread = nullptr;
 	return 0;
