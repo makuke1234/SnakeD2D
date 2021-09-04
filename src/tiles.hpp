@@ -57,5 +57,13 @@ namespace snake
 
 		[[nodiscard]] D2D1_SIZE_U getCoords(D2D1_SIZE_F const & tileSz) const noexcept;
 		void move(D2D1_SIZE_F const & newpos) noexcept;
+		[[nodiscard]] static constexpr bool s_collides(D2D1_RECT_F const & r1, D2D1_RECT_F const & r2) noexcept
+		{
+			return (r1.left < r2.right) & (r1.right > r2.left) & (r1.top < r2.bottom) & (r1.bottom > r2.top);
+		}
+		[[nodiscard]] constexpr bool collides(D2D1_RECT_F const & otherRect) const noexcept
+		{
+			return this->s_collides(this->m_tilesRect, otherRect);
+		}
 	};
 }

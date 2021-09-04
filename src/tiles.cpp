@@ -63,4 +63,3 @@ void snake::tile::move(D2D1_SIZE_F const & newpos) noexcept
 	this->m_tilesRect.right  = newpos.width  + xdelta;
 	this->m_tilesRect.bottom = newpos.height + ydelta;
 }
-
