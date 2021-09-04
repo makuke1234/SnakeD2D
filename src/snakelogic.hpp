@@ -24,12 +24,23 @@ namespace snake
 		snake::Application & m_parentRef;
 		direction m_snakeDirection{ direction::left };
 
-		struct p_snakeLoopThreadInfo
+		struct snakeInfo
 		{
 			logic & This;
+			enum class modes : std::uint8_t
+			{
+				normal,
+				game_over,
+				win
+			} mode{ modes::normal };
 			HANDLE hThread{ nullptr };
 			bool end{ false };
-			float time{ 0.f }, curTime{ .5f };
+			struct scoringStruct
+			{
+				float time{ 0.f }, curTime{ .5f };
+				std::uint32_t score{ 0 };
+				static constexpr std::uint32_t winningScore{ 1000000 };
+			} scoring{};
 		} m_ti{ *this };
 		static constexpr std::size_t p_snakeLoopThreadStackSize{ 10 * sizeof(std::size_t) };
 		static DWORD WINAPI sp_snakeLoopThread(LPVOID lp) noexcept;
@@ -37,6 +48,7 @@ namespace snake
 	public:
 		logic() = delete;
 		logic(Application & parentRef) noexcept;
+		~logic() noexcept;
 
 		void changeDirection(direction newdir) noexcept;
 		void moveSnake() const noexcept;
@@ -53,6 +65,8 @@ namespace snake
 		//
 		bool stopSnakeLoop() noexcept;
 		void stepNow() noexcept;
+
+		void resetScoring() noexcept;
 	};
 
 }

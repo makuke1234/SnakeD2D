@@ -19,7 +19,7 @@ LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPAR
 			}
 			else [[unlikely]]
 			{
-				snake::Application::sError(L"Error initialising window!");
+				snake::Application::sError(errid::Window);
 				::DestroyWindow(hwnd);
 			}
 
@@ -162,6 +162,53 @@ void snake::Application::bitmapBrushesStruct::DestroyAssets() noexcept
 	}
 }
 
+bool snake::Application::textStruct::CreateAssets(ID2D1HwndRenderTarget * pRT, IDWriteFactory * pWF) noexcept
+{
+	auto hr = pWF->CreateTextFormat(
+		L"Consolas",
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		16,
+		L"",
+		&this->consolas16
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
+	hr = pRT->CreateSolidColorBrush(
+		D2D1::ColorF(63.f / 255.f, 127.f / 255.f, 127.f / 255.f),
+		&this->pTextBrush
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
+	return true;
+}
+void snake::Application::textStruct::DestroyAssets() noexcept
+{
+	snake::SafeRelease(this->pTextBrush);
+	snake::SafeRelease(this->consolas16);
+}
+
+void snake::Application::textStruct::OnRender(D2D1_SIZE_F const & tileSz, ID2D1HwndRenderTarget * pRT) const noexcept
+{
+	// Draw example text
+	constexpr std::wstring_view testT{ L"test text" };
+
+	auto ltop{ Application::s_calcTile(tileSz, 10, 10) };
+	auto rbottom{ Application::s_calcTile(tileSz, 30, 13) };
+
+	pRT->DrawTextW(
+		testT.data(),
+		testT.size(),
+		this->consolas16,
+		D2D1::RectF(ltop.width, ltop.height, rbottom.width, rbottom.height),
+		this->pTextBrush
+	);
+}
+
 void snake::Application::p_calcDpiSpecific() noexcept
 {
 	RECT clientR{}, windowR{};
@@ -257,6 +304,7 @@ snake::Application::Application(PSTR cmdArgs) noexcept
 snake::Application::~Application() noexcept
 {
 	this->DestroyAssets();
+	snake::SafeRelease(this->m_pDWriteFactory);
 	snake::SafeRelease(this->m_pD2DFactory);
 }
 
@@ -267,11 +315,22 @@ bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
 	auto hr = D2D1CreateFactory(
 		D2D1_FACTORY_TYPE_SINGLE_THREADED,
 		IID_ID2D1Factory,
-		reinterpret_cast<void **>(&this->m_pD2DFactory)
+		static_cast<void **>(static_cast<void *>(&this->m_pD2DFactory))
 	);
 	if (FAILED(hr)) [[unlikely]]
 	{
 		this->Error(errid::D2DFactory);
+		return false;
+	}
+
+	hr = DWriteCreateFactory(
+		DWRITE_FACTORY_TYPE_SHARED,
+		__uuidof(this->m_pDWriteFactory),
+		static_cast<IUnknown **>(static_cast<void *>(&this->m_pDWriteFactory))
+	);
+	if (FAILED(hr)) [[unlikely]]
+	{
+		this->Error(errid::DWriteFactory);
 		return false;
 	}
 
@@ -421,7 +480,7 @@ int snake::Application::MsgLoop() noexcept
 	{
 		if (br == -1) [[unlikely]]
 		{
-			this->sError(L"Unknown error occurred!");
+			this->sError(errid::Unknown);
 			return -1;
 		}
 		::TranslateMessage(&msg);
@@ -637,7 +696,7 @@ bool snake::Application::CreateAssets() noexcept
 	// Create bitmap brushes
 	if (!this->m_bmpBrushes.CreateAssets(this->m_pRT, this->m_bmps)) [[unlikely]]
 	{
-		this->Error(L"Error creating D2D Assets (bitmap brushes)");
+		this->Error(errid::D2DAssetsBmBrushes);
 		return false;
 	}
 
@@ -653,11 +712,20 @@ bool snake::Application::CreateAssets() noexcept
 
 	this->m_tiles.snakeFoodTile.CreateAssets(this->m_bmpBrushes.snakeFoodTiles[5]);
 	
+	// Create fonts
+	if (!this->m_text.CreateAssets(this->m_pRT, this->m_pDWriteFactory)) [[unlikely]]
+	{
+		this->Error(errid::DWAssetsFonts);
+		return false;
+	}
 
 	return true;
 }
 void snake::Application::DestroyAssets() noexcept
 {
+	// Destroy font resources
+	this->m_text.DestroyAssets();
+	
 	// Reset tiles' resources
 	this->m_tiles.DestroyAssets();
 
@@ -692,6 +760,8 @@ void snake::Application::OnRender() noexcept
 
 	tile::OnRender(this->m_tiles.snakeBodyTiles, this->m_pRT);
 	this->m_tiles.snakeHeadTile.OnRender(this->m_pRT);
+
+	this->m_text.OnRender(this->m_tileSzF, this->m_pRT);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->DestroyAssets();
@@ -746,13 +816,13 @@ snake::tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept
 {
 	return tile(
 		this->m_tileSzF,
-		D2D1::SizeF(this->m_tileSzF.width * float(cx), this->m_tileSzF.height * float(cy)),
+		this->calcTile(cx, cy),
 		D2D1::SizeU(1, 1)
 	);
 }
 void snake::Application::moveTile(tile & t, long cx, long cy) const noexcept
 {
-	t.move(D2D1::SizeF(this->m_tileSzF.width * float(cx), this->m_tileSzF.height * float(cy)));
+	t.move(this->calcTile(cx, cy));
 }
 
 void snake::Application::initSnakeData()

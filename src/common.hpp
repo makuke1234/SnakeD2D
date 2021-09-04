@@ -8,6 +8,7 @@
 
 #include <string_view>
 #include <vector>
+#include <cstdint>
 
 #ifdef _DEBUG
 	#include <cstdio>

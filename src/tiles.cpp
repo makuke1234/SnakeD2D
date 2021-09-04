@@ -1,4 +1,5 @@
 #include "tiles.hpp"
+#include "window.hpp"
 
 snake::tile::tile(D2D1_SIZE_F const & tileSz, D2D1_SIZE_F const & startpos, D2D1_SIZE_U const & numTiles) noexcept
 	: m_tilesRect(D2D1::RectF(
@@ -20,12 +21,12 @@ snake::tile::~tile() noexcept
 		pBm,
 		&bmBrush
 	);
-	if (SUCCEEDED(hr))
-	{
-		bmBrush->SetExtendModeX(D2D1_EXTEND_MODE_WRAP);
-		bmBrush->SetExtendModeY(D2D1_EXTEND_MODE_WRAP);
-	}
 
+	if (FAILED(hr)) [[unlikely]]
+		return nullptr;
+
+	bmBrush->SetExtendModeX(D2D1_EXTEND_MODE_WRAP);
+	bmBrush->SetExtendModeY(D2D1_EXTEND_MODE_WRAP);
 
 	return bmBrush;
 }
@@ -50,7 +51,7 @@ void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) const noexcept
 
 [[nodiscard]] D2D1_SIZE_U snake::tile::getCoords(D2D1_SIZE_F const & tileSz) const noexcept
 {
-	return D2D1::SizeU(this->m_tilesRect.left / tileSz.width, this->m_tilesRect.top / tileSz.height);
+	return snake::Application::s_revcalcTile(tileSz, this->m_tilesRect.left, this->m_tilesRect.top);
 }
 void snake::tile::move(D2D1_SIZE_F const & newpos) noexcept
 {

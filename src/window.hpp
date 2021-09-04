@@ -21,16 +21,20 @@ namespace snake
 		{
 			L"Unknown error occurred!",
 			L"Error creating Direct2D factory!",
+			L"Error creating DirectWrite factory!",
 			L"Error initialisisng application class!",
 			L"Error creating Window!",
 			L"Error creating Direct2D render target!",
-			L"Error creating Direct2D assets!"
+			L"Error creating Direct2D assets!",
+			L"Error creating Direct2D assets (bitmap brushes)!",
+			L"Error creating DirectWrite assets (fonts)!"
 		};
 
 		HINSTANCE m_hInst{ nullptr };
 		PSTR m_cmdArgs;
 		HWND m_hwnd{ nullptr };
 		ID2D1Factory * m_pD2DFactory{ nullptr };
+		IDWriteFactory * m_pDWriteFactory{ nullptr };
 		ID2D1HwndRenderTarget * m_pRT{ nullptr };
 
 		struct tilesStruct
@@ -61,6 +65,17 @@ namespace snake
 			bool CreateAssets(ID2D1HwndRenderTarget * pRT, bitmapsStruct const & bmps) noexcept;
 			void DestroyAssets() noexcept;
 		} m_bmpBrushes;
+
+		struct textStruct
+		{
+			IDWriteTextFormat * consolas16{ nullptr };
+			ID2D1SolidColorBrush * pTextBrush{ nullptr };
+
+			bool CreateAssets(ID2D1HwndRenderTarget * pRT, IDWriteFactory * pWF) noexcept;
+			void DestroyAssets() noexcept;
+
+			void OnRender(D2D1_SIZE_F const & tileSz, ID2D1HwndRenderTarget * pRT) const noexcept;
+		} m_text;
 
 		FLOAT m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		D2D1_SIZE_U m_border{};
@@ -156,10 +171,13 @@ namespace snake
 		{
 			Unknown,
 			D2DFactory,
+			DWriteFactory,
 			AppClass,
 			Window,
 			D2DRT,
 			D2DAssets,
+			D2DAssetsBmBrushes,
+			DWAssetsFonts,
 
 			errid_enum_size
 		};
@@ -174,6 +192,41 @@ namespace snake
 
 		LRESULT OnKeyPress(WPARAM wp, LPARAM lp) noexcept;
 		LRESULT OnKeyRelease(WPARAM wp, LPARAM lp) noexcept;
+
+		[[nodiscard]] static constexpr D2D1_SIZE_F s_calcTile(D2D1_SIZE_F const & tileSz, long cx, long cy) noexcept
+		{
+			return { .width = tileSz.width * float(cx), .height = tileSz.height * float(cy) };
+		}
+		[[nodiscard]] constexpr float calcTilex(long cx) const noexcept
+		{
+			return this->m_tileSzF.width * float(cx);
+		}
+		[[nodiscard]] constexpr float calcTiley(long cy) const noexcept
+		{
+			return this->m_tileSzF.height * float(cy);
+		}
+		[[nodiscard]] constexpr D2D1_SIZE_F calcTile(long cx, long cy) const noexcept
+		{
+			return this->s_calcTile(this->m_tileSzF, cx, cy);
+		}
+
+
+		[[nodiscard]] static constexpr D2D1_SIZE_U s_revcalcTile(D2D1_SIZE_F const & tileSz, float x, float y) noexcept
+		{
+			return { .width = UINT32(x / tileSz.width), .height = UINT32(y / tileSz.height) };
+		}
+		[[nodiscard]] constexpr long revcalcTilex(float x) const noexcept
+		{
+			return long(x / this->m_tileSzF.width);
+		}
+		[[nodiscard]] constexpr long revcalcTiley(float y) const noexcept
+		{
+			return long(y / this->m_tileSzF.height);
+		}
+		[[nodiscard]] constexpr D2D1_SIZE_U revcalcTile(float x, float y) const noexcept
+		{
+			return this->s_revcalcTile(this->m_tileSzF, x, y);
+		}
 
 		tile makeSnakeTile(long cx, long cy) const noexcept;
 		void moveTile(tile & t, long cx, long cy) const noexcept;

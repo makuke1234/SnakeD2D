@@ -3,18 +3,59 @@
 
 DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
-	auto ti = static_cast<p_snakeLoopThreadInfo *>(lp);
+	auto ti = static_cast<snakeInfo *>(lp);
 
 	while (!ti->end)
 	{
-		while (ti->time > 0.f)
+		while (ti->scoring.time > 0.f)
 		{
 			Sleep(50);
-			ti->time -= .05f;
+			ti->scoring.time -= .05f;
 		}
-		ti->This.moveSnake();
+		ti->scoring.time = ti->scoring.curTime;
+
+		switch (ti->mode)
+		{
+		case snakeInfo::modes::normal:
+			ti->This.moveSnake();
+			// Check for "bad" collisions
+
+			// Check for "good" collisions with food
+			
+			// After checking "good" collisions, check score
+			if (ti->scoring.score >= ti->scoring.winningScore)
+			{
+				ti->mode = snakeInfo::modes::win;
+				ti->scoring.time = 0.f;
+			}
+			break;
+		case snakeInfo::modes::game_over:
+			// Draw game over text
+
+
+			// Update screen
+			::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
+
+			// Wait for mode change
+			while (ti->mode == snakeInfo::modes::game_over)
+				Sleep(50);
+
+			break;
+		case snakeInfo::modes::win:
+			// Draw winning text
+
+
+			// Update screen
+			::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
+
+			// Wait for mode change
+			while (ti->mode == snakeInfo::modes::win)
+				Sleep(50);
+			
+			break;
+		}
+		// Update screen
 		::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
-		ti->time = ti->curTime;
 	}
 
 	ti->hThread = nullptr;
@@ -24,6 +65,10 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 snake::logic::logic(Application & parentRef) noexcept
 	: m_parentRef(parentRef)
 {}
+snake::logic::~logic() noexcept
+{
+	this->stopSnakeLoop();
+}
 
 void snake::logic::changeDirection(direction newdir) noexcept
 {
@@ -112,5 +157,10 @@ bool snake::logic::stopSnakeLoop() noexcept
 }
 void snake::logic::stepNow() noexcept
 {
-	this->m_ti.time = 0.f;
+	this->m_ti.scoring.time = 0.f;
+}
+
+void snake::logic::resetScoring() noexcept
+{
+	this->m_ti.scoring = snakeInfo::scoringStruct();
 }
