@@ -213,7 +213,7 @@ namespace snake
 
 		[[nodiscard]] static constexpr D2D1_SIZE_U s_revcalcTile(D2D1_SIZE_F const & tileSz, float x, float y) noexcept
 		{
-			return { .width = UINT32(x / tileSz.width), .height = UINT32(y / tileSz.height) };
+			return { .width = UINT32(x / tileSz.width + .5f), .height = UINT32(y / tileSz.height + .5f) };
 		}
 		[[nodiscard]] constexpr long revcalcTilex(float x) const noexcept
 		{

@@ -79,7 +79,7 @@ void snake::logic::moveSnake() const noexcept
 
 	auto prevtile = this->m_parentRef.m_tiles.snakeHeadTile;
 	auto [uposx, uposy] = prevtile.getCoords(this->m_parentRef.m_tileSzF);
-	std::intptr_t posx{ std::intptr_t(uposx) }, posy{ std::intptr_t(uposy) };
+	auto posx{ std::intptr_t(uposx) }, posy{ std::intptr_t(uposy) };
 	
 	switch (this->m_snakeDirection)
 	{
