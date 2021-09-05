@@ -4,8 +4,8 @@
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, PSTR cmdArgs, int nCmdShow)
 {
 	snake::Application app(cmdArgs);
-	if (app.Init(hInst, nCmdShow)) [[likely]]
-		return app.MsgLoop();
+	if (app.initApp(hInst, nCmdShow)) [[likely]]
+		return app.msgLoop();
 	else [[unlikely]]
 		return -1;
 }

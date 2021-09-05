@@ -11,7 +11,7 @@ snake::tile::tile(D2D1_SIZE_F const & tileSz, D2D1_SIZE_F const & startpos, D2D1
 {}
 snake::tile::~tile() noexcept
 {
-	this->DestroyAssets();
+	this->destroyAssets();
 }
 
 [[nodiscard]] ID2D1BitmapBrush * snake::tile::CreateBmBrush(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBm) noexcept
@@ -30,18 +30,18 @@ snake::tile::~tile() noexcept
 
 	return bmBrush;
 }
-void snake::tile::CreateAssets(ID2D1BitmapBrush * pBmBrush) noexcept
+void snake::tile::createAssets(ID2D1BitmapBrush * pBmBrush) noexcept
 {
 	if (this->m_pBmBrush != nullptr)
 		return;
 	this->m_pBmBrush = pBmBrush;	
 }
-void snake::tile::DestroyAssets() noexcept
+void snake::tile::destroyAssets() noexcept
 {
 	this->m_pBmBrush = nullptr;
 }
 
-void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) const noexcept
+void snake::tile::onRender(ID2D1HwndRenderTarget * pRT) const noexcept
 {
 	pRT->FillRectangle(
 		this->m_tilesRect,
@@ -51,12 +51,12 @@ void snake::tile::OnRender(ID2D1HwndRenderTarget * pRT) const noexcept
 
 [[nodiscard]] D2D1_SIZE_U snake::tile::getCoords(D2D1_SIZE_F const & tileSz) const noexcept
 {
-	return snake::Application::s_revcalcTile(tileSz, this->m_tilesRect.left, this->m_tilesRect.top);
+	return snake::Application::s_calcFromTile(tileSz, this->m_tilesRect.left, this->m_tilesRect.top);
 }
 void snake::tile::move(D2D1_SIZE_F const & newpos) noexcept
 {
 	auto xdelta = this->m_tilesRect.right  - this->m_tilesRect.left,
-		 ydelta = this->m_tilesRect.bottom - this->m_tilesRect.top;
+	     ydelta = this->m_tilesRect.bottom - this->m_tilesRect.top;
 
 	this->m_tilesRect.left   = newpos.width;
 	this->m_tilesRect.top    = newpos.height;

@@ -14,9 +14,9 @@
 #define IDB_SNAKE_FOOD_TILE9  108
 
 
-#define IDW_SOUND_EAT 110
+#define IDW_SOUND_EAT       110
 #define IDW_SOUND_GAME_OVER 111
-#define IDW_SOUND_WIN 112
+#define IDW_SOUND_WIN       112
 
 
 #endif

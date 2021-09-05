@@ -2,7 +2,7 @@
 #include "window.hpp"
 #include "resource.h"
 
-DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
+DWORD WINAPI snake::snakeLogic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
 	auto inf = static_cast<snakeInfo *>(lp);
 
@@ -123,19 +123,19 @@ sp_snakeLoopThreadFinish: ;
 	return 0;
 }
 
-snake::logic::logic(Application & parentRef) noexcept
+snake::snakeLogic::snakeLogic(Application & parentRef) noexcept
 	: m_appref(parentRef)
 {}
-snake::logic::~logic() noexcept
+snake::snakeLogic::~snakeLogic() noexcept
 {
 	this->stopSnakeLoop();
 }
 
-void snake::logic::changeDirection(direction newdir) noexcept
+void snake::snakeLogic::changeDirection(direction newdir) noexcept
 {
 	this->m_sInfo.scoring.snakeDir = newdir;
 }
-void snake::logic::moveSnake() const noexcept
+void snake::snakeLogic::moveSnake() const noexcept
 {
 
 	auto prevtile = this->m_appref.m_tiles.snakeHeadTile;
@@ -176,15 +176,15 @@ void snake::logic::moveSnake() const noexcept
 	this->m_appref.m_tiles.snakeBodyTiles.pop_back();
 	this->m_appref.m_tiles.snakeBodyTiles.front() = prevtile;
 }
-void snake::logic::moveAndGrowSnake() const
+void snake::snakeLogic::moveAndGrowSnake() const
 {
 	auto tail{ this->m_appref.m_tiles.snakeBodyTiles.back() };
-	tail.CreateAssets(this->m_appref.m_bmpBrushes.snakeBodyTile);
+	tail.createAssets(this->m_appref.m_bmpBrushes.snakeBodyTile);
 	this->moveSnake();
 	this->m_appref.m_tiles.snakeBodyTiles.emplace_back(std::move(tail));
 }
 
-bool snake::logic::startSnakeLoop() noexcept
+bool snake::snakeLogic::startSnakeLoop() noexcept
 {
 	if (this->m_sInfo.hThread != nullptr)
 		return true;
@@ -205,7 +205,7 @@ bool snake::logic::startSnakeLoop() noexcept
 			return true;
 	}
 }
-bool snake::logic::stopSnakeLoop() noexcept
+bool snake::snakeLogic::stopSnakeLoop() noexcept
 {
 	if (this->m_sInfo.hThread == nullptr)
 		return false;
@@ -216,12 +216,12 @@ bool snake::logic::stopSnakeLoop() noexcept
 	
 	return true;
 }
-void snake::logic::stepNow() noexcept
+void snake::snakeLogic::stepNow() noexcept
 {
 	this->m_sInfo.scoring.time = 0.f;
 }
 
-void snake::logic::resetScoring() noexcept
+void snake::snakeLogic::resetScoring() noexcept
 {
 	this->m_sInfo.scoring = snakeInfo::scoringStruct();
 }
