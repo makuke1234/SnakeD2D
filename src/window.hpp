@@ -232,6 +232,11 @@ namespace snake
 		void moveTile(tile & t, long cx, long cy) const noexcept;
 
 		void initSnakeData();
+
+		void restartGame();
+
+		void playSnd(LPCWSTR rscName) const noexcept;
+		void playSndAsync(LPCWSTR rscName) const noexcept;
 	};
 
 }

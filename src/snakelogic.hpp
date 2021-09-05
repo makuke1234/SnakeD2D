@@ -21,8 +21,7 @@ namespace snake
 	private:
 		friend class snake::Application;
 
-		snake::Application & m_parentRef;
-		direction m_snakeDirection{ direction::left };
+		snake::Application & m_appref;
 
 		struct snakeInfo
 		{
@@ -32,16 +31,18 @@ namespace snake
 				normal,
 				game_over,
 				win
-			} mode{ modes::normal };
+			};
 			HANDLE hThread{ nullptr };
-			bool end{ false };
+			bool endSignal{ false };
 			struct scoringStruct
 			{
 				float time{ 0.f }, curTime{ .5f };
 				std::uint32_t score{ 0 };
 				static constexpr std::uint32_t winningScore{ 1000000 };
+				modes mode{ modes::normal };
+				direction snakeDir{ direction::left };
 			} scoring{};
-		} m_ti{ *this };
+		} m_sInfo{ *this };
 		static constexpr std::size_t p_snakeLoopThreadStackSize{ 10 * sizeof(std::size_t) };
 		static DWORD WINAPI sp_snakeLoopThread(LPVOID lp) noexcept;
 

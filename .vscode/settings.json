@@ -24,6 +24,11 @@
 		"xiosbase": "cpp",
 		"xlocnum": "cpp",
 		"xmemory": "cpp",
-		"*.rh": "cpp"
+		"*.rh": "cpp",
+		"array": "cpp",
+		"initializer_list": "cpp",
+		"istream": "cpp",
+		"iterator": "cpp",
+		"string": "cpp"
 	}
 }

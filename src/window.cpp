@@ -123,12 +123,12 @@ void snake::Application::tilesStruct::DestroyAssets() noexcept
 
 void snake::Application::bitmapsStruct::DestroyAssets() noexcept
 {
-	snake::SafeRelease(this->obstacleTile);
-	snake::SafeRelease(this->snakeBodyTile);
-	snake::SafeRelease(this->snakeHeadTile);
+	snake::safeRelease(this->obstacleTile);
+	snake::safeRelease(this->snakeBodyTile);
+	snake::safeRelease(this->snakeHeadTile);
 	for (auto & i : this->snakeFoodTiles)
 	{
-		snake::SafeRelease(i);
+		snake::safeRelease(i);
 	}
 }
 
@@ -153,12 +153,12 @@ bool snake::Application::bitmapBrushesStruct::CreateAssets(
 }
 void snake::Application::bitmapBrushesStruct::DestroyAssets() noexcept
 {
-	snake::SafeRelease(this->obstacleTile);
-	snake::SafeRelease(this->snakeBodyTile);
-	snake::SafeRelease(this->snakeHeadTile);
+	snake::safeRelease(this->obstacleTile);
+	snake::safeRelease(this->snakeBodyTile);
+	snake::safeRelease(this->snakeHeadTile);
 	for (auto & i : this->snakeFoodTiles)
 	{
-		snake::SafeRelease(i);
+		snake::safeRelease(i);
 	}
 }
 
@@ -188,8 +188,8 @@ bool snake::Application::textStruct::CreateAssets(ID2D1HwndRenderTarget * pRT, I
 }
 void snake::Application::textStruct::DestroyAssets() noexcept
 {
-	snake::SafeRelease(this->pTextBrush);
-	snake::SafeRelease(this->consolas16);
+	snake::safeRelease(this->pTextBrush);
+	snake::safeRelease(this->consolas16);
 }
 
 void snake::Application::textStruct::OnRender(D2D1_SIZE_F const & tileSz, ID2D1HwndRenderTarget * pRT) const noexcept
@@ -304,8 +304,8 @@ snake::Application::Application(PSTR cmdArgs) noexcept
 snake::Application::~Application() noexcept
 {
 	this->DestroyAssets();
-	snake::SafeRelease(this->m_pDWriteFactory);
-	snake::SafeRelease(this->m_pD2DFactory);
+	snake::safeRelease(this->m_pDWriteFactory);
+	snake::safeRelease(this->m_pD2DFactory);
 }
 
 bool snake::Application::Init(HINSTANCE hInst, int nCmdShow)
@@ -734,7 +734,7 @@ void snake::Application::DestroyAssets() noexcept
 	// Destroy bitmaps
 	this->m_bmps.DestroyAssets();
 
-	snake::SafeRelease(this->m_pRT);
+	snake::safeRelease(this->m_pRT);
 }
 
 void snake::Application::OnRender() noexcept
@@ -798,8 +798,8 @@ LRESULT snake::Application::OnKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 	}
 
 	// Check if the user wants to make a valid move
-	if (dir != this->m_snakeLogic.m_snakeDirection &&
-		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_snakeDirection), logic::direction_enum_size))
+	if (dir != this->m_snakeLogic.m_sInfo.scoring.snakeDir &&
+		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), logic::direction_enum_size))
 	{
 		this->m_snakeLogic.changeDirection(dir);
 		this->m_snakeLogic.stepNow();
@@ -836,4 +836,20 @@ void snake::Application::initSnakeData()
 	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(50, 25));
 
 	this->m_tiles.snakeFoodTile = this->makeSnakeTile(20, 19);
+}
+
+void snake::Application::restartGame()
+{
+	this->initSnakeData();
+	this->m_snakeLogic.resetScoring();
+	::InvalidateRect(this->m_hwnd, nullptr, FALSE);
+}
+
+void snake::Application::playSnd(LPCWSTR rscName) const noexcept
+{
+	snake::playSndRsc(rscName, this->m_hInst);
+}
+void snake::Application::playSndAsync(LPCWSTR rscName) const noexcept
+{
+	snake::playSndRscAsync(rscName, this->m_hInst);
 }

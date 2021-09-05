@@ -5,7 +5,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
 	auto inf = static_cast<snakeInfo *>(lp);
 
-	while (!inf->end)
+	while (!inf->endSignal)
 	{
 		while (inf->scoring.time > 0.f)
 		{
@@ -14,14 +14,14 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 		}
 		inf->scoring.time = inf->scoring.curTime;
 
-		switch (inf->mode)
+		switch (inf->scoring.mode)
 		{
 		case snakeInfo::modes::normal:
 		{
 			// Check for "bad" collisions
 			bool collides{ false };
-			auto const & headRect = inf->This.m_parentRef.m_tiles.snakeHeadTile.getBounds();
-			for (auto const & i : inf->This.m_parentRef.m_tiles.obstacleTiles)
+			auto const & headRect = inf->This.m_appref.m_tiles.snakeHeadTile.getBounds();
+			for (auto const & i : inf->This.m_appref.m_tiles.obstacleTiles)
 			{
 				if (i.collides(headRect))
 				{
@@ -31,7 +31,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			}
 			if (!collides)
 			{
-				for (auto const & i : inf->This.m_parentRef.m_tiles.snakeBodyTiles)
+				for (auto const & i : inf->This.m_appref.m_tiles.snakeBodyTiles)
 				{
 					if (i.collides(headRect))
 					{
@@ -43,15 +43,18 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			if (collides)
 			{
-				inf->mode = snakeInfo::modes::game_over;
+				inf->scoring.mode = snakeInfo::modes::game_over;
 				inf->scoring.time = 0.f;
 				break;
 			}
 
 			// Check for "good" collisions with food
-			if (inf->This.m_parentRef.m_tiles.snakeFoodTile.collides(headRect))
+			if (inf->This.m_appref.m_tiles.snakeFoodTile.collides(headRect))
 			{
 				// Eat food and generate new
+
+				// Play eating sound async
+				
 
 				// Grow snake
 				inf->This.moveAndGrowSnake();
@@ -65,46 +68,50 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			// After checking "good" collisions, check score
 			if (inf->scoring.score >= inf->scoring.winningScore)
 			{
-				inf->mode = snakeInfo::modes::win;
+				inf->scoring.mode = snakeInfo::modes::win;
 				inf->scoring.time = 0.f;
 			}
 			break;
 		}
 		case snakeInfo::modes::game_over:
+			// Play game over sound
+
 			// Draw game over text
 
 
 			// Update screen
-			::InvalidateRect(inf->This.m_parentRef.m_hwnd, nullptr, FALSE);
+			::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
-			while (inf->mode == snakeInfo::modes::game_over)
+			while (inf->scoring.mode == snakeInfo::modes::game_over)
 			{
 				Sleep(50);
-				if (inf->end)
+				if (inf->endSignal)
 					goto sp_snakeLoopThreadFinish;
 			}
 
 			break;
 		case snakeInfo::modes::win:
+			// Play winning sound
+
 			// Draw winning text
 
 
 			// Update screen
-			::InvalidateRect(inf->This.m_parentRef.m_hwnd, nullptr, FALSE);
+			::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
-			while (inf->mode == snakeInfo::modes::win)
+			while (inf->scoring.mode == snakeInfo::modes::win)
 			{
 				Sleep(50);
-				if (inf->end)
+				if (inf->endSignal)
 					goto sp_snakeLoopThreadFinish;
 			}
 
 			break;
 		}
 		// Update screen
-		::InvalidateRect(inf->This.m_parentRef.m_hwnd, nullptr, FALSE);
+		::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 	}
 
 sp_snakeLoopThreadFinish: ;
@@ -114,7 +121,7 @@ sp_snakeLoopThreadFinish: ;
 }
 
 snake::logic::logic(Application & parentRef) noexcept
-	: m_parentRef(parentRef)
+	: m_appref(parentRef)
 {}
 snake::logic::~logic() noexcept
 {
@@ -123,16 +130,16 @@ snake::logic::~logic() noexcept
 
 void snake::logic::changeDirection(direction newdir) noexcept
 {
-	this->m_snakeDirection = newdir;
+	this->m_sInfo.scoring.snakeDir = newdir;
 }
 void snake::logic::moveSnake() const noexcept
 {
 
-	auto prevtile = this->m_parentRef.m_tiles.snakeHeadTile;
-	auto [uposx, uposy] = prevtile.getCoords(this->m_parentRef.m_tileSzF);
+	auto prevtile = this->m_appref.m_tiles.snakeHeadTile;
+	auto [uposx, uposy] = prevtile.getCoords(this->m_appref.m_tileSzF);
 	auto posx{ std::intptr_t(uposx) }, posy{ std::intptr_t(uposy) };
 	
-	switch (this->m_snakeDirection)
+	switch (this->m_sInfo.scoring.snakeDir)
 	{
 	case direction::left:
 		--posx;
@@ -148,8 +155,8 @@ void snake::logic::moveSnake() const noexcept
 		break;
 	}
 
-	constexpr auto ipWidth{ std::intptr_t(this->m_parentRef.fieldWidth) },
-		ipHeight{ std::intptr_t(this->m_parentRef.fieldHeight) };
+	constexpr auto ipWidth{ std::intptr_t(this->m_appref.fieldWidth) },
+		ipHeight{ std::intptr_t(this->m_appref.fieldHeight) };
 	// Make sure that position stays in bounds
 	if (posx < 0)
 		posx += ipWidth;
@@ -161,35 +168,35 @@ void snake::logic::moveSnake() const noexcept
 	else if (posy >= ipHeight)
 		posy -= ipHeight;
 
-	this->m_parentRef.moveTile(this->m_parentRef.m_tiles.snakeHeadTile, posx, posy);
-	this->m_parentRef.m_tiles.snakeBodyTiles.emplace_front(std::move(this->m_parentRef.m_tiles.snakeBodyTiles.back()));
-	this->m_parentRef.m_tiles.snakeBodyTiles.pop_back();
-	this->m_parentRef.m_tiles.snakeBodyTiles.front() = prevtile;
+	this->m_appref.moveTile(this->m_appref.m_tiles.snakeHeadTile, posx, posy);
+	this->m_appref.m_tiles.snakeBodyTiles.emplace_front(std::move(this->m_appref.m_tiles.snakeBodyTiles.back()));
+	this->m_appref.m_tiles.snakeBodyTiles.pop_back();
+	this->m_appref.m_tiles.snakeBodyTiles.front() = prevtile;
 }
 void snake::logic::moveAndGrowSnake() const
 {
-	auto tail{ this->m_parentRef.m_tiles.snakeBodyTiles.back() };
-	tail.CreateAssets(this->m_parentRef.m_bmpBrushes.snakeBodyTile);
+	auto tail{ this->m_appref.m_tiles.snakeBodyTiles.back() };
+	tail.CreateAssets(this->m_appref.m_bmpBrushes.snakeBodyTile);
 	this->moveSnake();
-	this->m_parentRef.m_tiles.snakeBodyTiles.emplace_back(std::move(tail));
+	this->m_appref.m_tiles.snakeBodyTiles.emplace_back(std::move(tail));
 }
 
 bool snake::logic::startSnakeLoop() noexcept
 {
-	if (this->m_ti.hThread != nullptr)
+	if (this->m_sInfo.hThread != nullptr)
 		return true;
 	else
 	{
-		this->m_ti.end = false;
-		this->m_ti.hThread = ::CreateThread(
+		this->m_sInfo.endSignal = false;
+		this->m_sInfo.hThread = ::CreateThread(
 			nullptr,
 			this->p_snakeLoopThreadStackSize,
 			&this->sp_snakeLoopThread,
-			&this->m_ti,
+			&this->m_sInfo,
 			0,
 			nullptr
 		);
-		if (this->m_ti.hThread == nullptr)
+		if (this->m_sInfo.hThread == nullptr)
 			return false;
 		else
 			return true;
@@ -197,21 +204,21 @@ bool snake::logic::startSnakeLoop() noexcept
 }
 bool snake::logic::stopSnakeLoop() noexcept
 {
-	if (this->m_ti.hThread == nullptr)
+	if (this->m_sInfo.hThread == nullptr)
 		return false;
 	
-	this->m_ti.end = true;
-	while (this->m_ti.hThread != nullptr)
+	this->m_sInfo.endSignal = true;
+	while (this->m_sInfo.hThread != nullptr)
 		Sleep(1);
 	
 	return true;
 }
 void snake::logic::stepNow() noexcept
 {
-	this->m_ti.scoring.time = 0.f;
+	this->m_sInfo.scoring.time = 0.f;
 }
 
 void snake::logic::resetScoring() noexcept
 {
-	this->m_ti.scoring = snakeInfo::scoringStruct();
+	this->m_sInfo.scoring = snakeInfo::scoringStruct();
 }

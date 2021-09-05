@@ -5,6 +5,7 @@
 
 #include <d2d1.h>
 #include <dwrite.h>
+#include <mmsystem.h>
 
 #include <string_view>
 #include <vector>
@@ -20,7 +21,7 @@
 namespace snake
 {
 	template<class Interface>
-	void SafeRelease(Interface *& ppInstance)
+	void safeRelease(Interface *& ppInstance)
 	{
 		if (ppInstance != nullptr) [[likely]]
 		{
@@ -41,4 +42,8 @@ namespace snake
 	{
 		return (in == 1 || in == (limit - 1));
 	}
+
+	void playSndRsc(LPCWSTR resourceName, HINSTANCE hInst) noexcept;
+	void playSndRscAsync(LPCWSTR resourceName, HINSTANCE hInst) noexcept;
+	void stopSndRscAsync() noexcept;
 }
