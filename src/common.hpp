@@ -43,7 +43,7 @@ namespace snake
 		return (in == 1 || in == (limit - 1));
 	}
 
-	void playSndRsc(LPCWSTR resourceName, HINSTANCE hInst) noexcept;
-	void playSndRscAsync(LPCWSTR resourceName, HINSTANCE hInst) noexcept;
+	void playSndRsc(std::uint16_t resource, HINSTANCE hInst) noexcept;
+	void playSndRscAsync(std::uint16_t resource, HINSTANCE hInst) noexcept;
 	void stopSndRscAsync() noexcept;
 }

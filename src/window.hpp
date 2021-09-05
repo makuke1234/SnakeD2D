@@ -235,8 +235,8 @@ namespace snake
 
 		void restartGame();
 
-		void playSnd(LPCWSTR rscName) const noexcept;
-		void playSndAsync(LPCWSTR rscName) const noexcept;
+		void playSnd(std::uint16_t rsc) const noexcept;
+		void playSndAsync(std::uint16_t rsc) const noexcept;
 	};
 
 }

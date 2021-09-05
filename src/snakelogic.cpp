@@ -1,5 +1,6 @@
 #include "snakelogic.hpp"
 #include "window.hpp"
+#include "resource.h"
 
 DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
@@ -54,7 +55,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 				// Eat food and generate new
 
 				// Play eating sound async
-				
+				inf->This.m_appref.playSndAsync(IDW_SOUND_EAT);
 
 				// Grow snake
 				inf->This.moveAndGrowSnake();
@@ -75,6 +76,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 		}
 		case snakeInfo::modes::game_over:
 			// Play game over sound
+			inf->This.m_appref.playSnd(IDW_SOUND_GAME_OVER);
 
 			// Draw game over text
 
@@ -93,6 +95,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			break;
 		case snakeInfo::modes::win:
 			// Play winning sound
+			inf->This.m_appref.playSnd(IDW_SOUND_WIN);
 
 			// Draw winning text
 

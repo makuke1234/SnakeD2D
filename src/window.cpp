@@ -845,11 +845,11 @@ void snake::Application::restartGame()
 	::InvalidateRect(this->m_hwnd, nullptr, FALSE);
 }
 
-void snake::Application::playSnd(LPCWSTR rscName) const noexcept
+void snake::Application::playSnd(std::uint16_t rsc) const noexcept
 {
-	snake::playSndRsc(rscName, this->m_hInst);
+	snake::playSndRsc(rsc, this->m_hInst);
 }
-void snake::Application::playSndAsync(LPCWSTR rscName) const noexcept
+void snake::Application::playSndAsync(std::uint16_t rsc) const noexcept
 {
-	snake::playSndRscAsync(rscName, this->m_hInst);
+	snake::playSndRscAsync(rsc, this->m_hInst);
 }

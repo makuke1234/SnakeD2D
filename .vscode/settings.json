@@ -29,6 +29,24 @@
 		"initializer_list": "cpp",
 		"istream": "cpp",
 		"iterator": "cpp",
-		"string": "cpp"
+		"string": "cpp",
+		"cctype": "cpp",
+		"clocale": "cpp",
+		"compare": "cpp",
+		"concepts": "cpp",
+		"cstddef": "cpp",
+		"cstdint": "cpp",
+		"cstdio": "cpp",
+		"cstdlib": "cpp",
+		"cstring": "cpp",
+		"cwchar": "cpp",
+		"iosfwd": "cpp",
+		"new": "cpp",
+		"stdexcept": "cpp",
+		"tuple": "cpp",
+		"typeinfo": "cpp",
+		"xfacet": "cpp",
+		"xstddef": "cpp",
+		"xtr1common": "cpp"
 	}
 }
