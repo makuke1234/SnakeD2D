@@ -3,25 +3,25 @@
 
 DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
-	auto ti = static_cast<snakeInfo *>(lp);
+	auto inf = static_cast<snakeInfo *>(lp);
 
-	while (!ti->end)
+	while (!inf->end)
 	{
-		while (ti->scoring.time > 0.f)
+		while (inf->scoring.time > 0.f)
 		{
 			Sleep(50);
-			ti->scoring.time -= .05f;
+			inf->scoring.time -= .05f;
 		}
-		ti->scoring.time = ti->scoring.curTime;
+		inf->scoring.time = inf->scoring.curTime;
 
-		switch (ti->mode)
+		switch (inf->mode)
 		{
 		case snakeInfo::modes::normal:
 		{
 			// Check for "bad" collisions
 			bool collides{ false };
-			auto const & headRect = ti->This.m_parentRef.m_tiles.snakeHeadTile.getBounds();
-			for (auto const & i : ti->This.m_parentRef.m_tiles.obstacleTiles)
+			auto const & headRect = inf->This.m_parentRef.m_tiles.snakeHeadTile.getBounds();
+			for (auto const & i : inf->This.m_parentRef.m_tiles.obstacleTiles)
 			{
 				if (i.collides(headRect))
 				{
@@ -31,7 +31,7 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			}
 			if (!collides)
 			{
-				for (auto const & i : ti->This.m_parentRef.m_tiles.snakeBodyTiles)
+				for (auto const & i : inf->This.m_parentRef.m_tiles.snakeBodyTiles)
 				{
 					if (i.collides(headRect))
 					{
@@ -43,30 +43,30 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			if (collides)
 			{
-				ti->mode = snakeInfo::modes::game_over;
-				ti->scoring.time = 0.f;
+				inf->mode = snakeInfo::modes::game_over;
+				inf->scoring.time = 0.f;
 				break;
 			}
 
 			// Check for "good" collisions with food
-			if (ti->This.m_parentRef.m_tiles.snakeFoodTile.collides(headRect))
+			if (inf->This.m_parentRef.m_tiles.snakeFoodTile.collides(headRect))
 			{
 				// Eat food and generate new
 
 				// Grow snake
-				ti->This.moveAndGrowSnake();
+				inf->This.moveAndGrowSnake();
 			}
 			else
 			{
 				// Move snake normally
-				ti->This.moveSnake();
+				inf->This.moveSnake();
 			}
 
 			// After checking "good" collisions, check score
-			if (ti->scoring.score >= ti->scoring.winningScore)
+			if (inf->scoring.score >= inf->scoring.winningScore)
 			{
-				ti->mode = snakeInfo::modes::win;
-				ti->scoring.time = 0.f;
+				inf->mode = snakeInfo::modes::win;
+				inf->scoring.time = 0.f;
 			}
 			break;
 		}
@@ -75,13 +75,13 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 
 			// Update screen
-			::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
+			::InvalidateRect(inf->This.m_parentRef.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
-			while (ti->mode == snakeInfo::modes::game_over)
+			while (inf->mode == snakeInfo::modes::game_over)
 			{
 				Sleep(50);
-				if (ti->end)
+				if (inf->end)
 					goto sp_snakeLoopThreadFinish;
 			}
 
@@ -91,25 +91,25 @@ DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 
 			// Update screen
-			::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
+			::InvalidateRect(inf->This.m_parentRef.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
-			while (ti->mode == snakeInfo::modes::win)
+			while (inf->mode == snakeInfo::modes::win)
 			{
 				Sleep(50);
-				if (ti->end)
+				if (inf->end)
 					goto sp_snakeLoopThreadFinish;
 			}
 
 			break;
 		}
 		// Update screen
-		::InvalidateRect(ti->This.m_parentRef.m_hwnd, nullptr, FALSE);
+		::InvalidateRect(inf->This.m_parentRef.m_hwnd, nullptr, FALSE);
 	}
 
 sp_snakeLoopThreadFinish: ;
 
-	ti->hThread = nullptr;
+	inf->hThread = nullptr;
 	return 0;
 }
 

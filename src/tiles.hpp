@@ -64,7 +64,8 @@ namespace snake
 
 		[[nodiscard]] static constexpr bool s_collides(D2D1_RECT_F const & r1, D2D1_RECT_F const & r2) noexcept
 		{
-			return (r1.left < r2.right) && (r1.right > r2.left) && (r1.top < r2.bottom) && (r1.bottom > r2.top);
+			constexpr float d{ .1f };
+			return ((r1.left + d) < r2.right) && (r1.right > (r2.left + d)) && ((r1.top + d) < r2.bottom) && (r1.bottom > (r2.top + d));
 		}
 		[[nodiscard]] constexpr bool collides(D2D1_RECT_F const & otherRect) const noexcept
 		{
