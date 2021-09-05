@@ -488,12 +488,18 @@ int snake::Application::msgLoop() noexcept
 	return int(msg.wParam);
 }
 
-void snake::Application::error(const wchar_t * str) const noexcept
+void snake::Application::s_error(errid id) noexcept
 {
+	using eT = std::underlying_type_t<errid>;
+	
+	auto oid = eT(id);
+	if (oid >= eT(errid::errid_enum_size)) [[unlikely]]
+		oid = eT(errid::Unknown);
+
 	::MessageBoxW(
-		this->m_hwnd,
-		str,
-		this->applicationName.data(),
+		nullptr,
+		snake::Application::s_errorIds[oid], 
+		Application::applicationName.data(),
 		MB_ICONERROR | MB_OK
 	);
 }
@@ -517,18 +523,12 @@ void snake::Application::error(errid id) const noexcept
 		MB_ICONERROR | MB_OK
 	);
 }
-void snake::Application::s_error(errid id) noexcept
+void snake::Application::error(const wchar_t * str) const noexcept
 {
-	using eT = std::underlying_type_t<errid>;
-	
-	auto oid = eT(id);
-	if (oid >= eT(errid::errid_enum_size)) [[unlikely]]
-		oid = eT(errid::Unknown);
-
 	::MessageBoxW(
-		nullptr,
-		snake::Application::s_errorIds[oid], 
-		Application::applicationName.data(),
+		this->m_hwnd,
+		str,
+		this->applicationName.data(),
 		MB_ICONERROR | MB_OK
 	);
 }

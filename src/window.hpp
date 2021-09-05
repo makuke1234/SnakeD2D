@@ -164,8 +164,6 @@ namespace snake
 		bool initApp(HINSTANCE hInst, int nCmdShow);
 		int msgLoop() noexcept;
 
-		void error(const wchar_t * str) const noexcept;
-		static void s_error(const wchar_t * str) noexcept;
 
 		enum class errid : std::int_fast8_t
 		{
@@ -181,8 +179,11 @@ namespace snake
 
 			errid_enum_size
 		};
-		void error(errid id) const noexcept;
 		static void s_error(errid id) noexcept;
+		static void s_error(const wchar_t * str) noexcept;
+		
+		void error(errid id) const noexcept;
+		void error(const wchar_t * str) const noexcept;
 
 		bool createAssets() noexcept;
 		void destroyAssets() noexcept;
