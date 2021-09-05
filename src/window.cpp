@@ -777,20 +777,20 @@ void snake::Application::onResize(UINT width, UINT height) const noexcept
 
 LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) noexcept
 {
-	snakeLogic::direction dir{};
+	logic::direction dir{};
 	switch (wp)
 	{
 	case VK_LEFT:
-		dir = snakeLogic::direction::left;
+		dir = logic::direction::left;
 		break;
 	case VK_RIGHT:
-		dir = snakeLogic::direction::right;
+		dir = logic::direction::right;
 		break;
 	case VK_UP:
-		dir = snakeLogic::direction::up;
+		dir = logic::direction::up;
 		break;
 	case VK_DOWN:
-		dir = snakeLogic::direction::down;
+		dir = logic::direction::down;
 		break;
 	default:
 		return 0;
@@ -798,7 +798,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 
 	// Check if the user wants to make a valid move
 	if (dir != this->m_snakeLogic.m_sInfo.scoring.snakeDir &&
-		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), snakeLogic::direction_enum_size))
+		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), logic::direction_enum_size))
 	{
 		this->m_snakeLogic.changeDirection(dir);
 		this->m_snakeLogic.stepNow();

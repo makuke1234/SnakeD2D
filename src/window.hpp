@@ -12,7 +12,7 @@ namespace snake
 	class Application
 	{
 	private:
-		friend class snakeLogic;
+		friend class logic;
 
 		static constexpr std::wstring_view applicationName{ L"SnakeD2D" },
 			className{ L"SnakeDirect2DClass" };
@@ -83,7 +83,7 @@ namespace snake
 		static constexpr FLOAT tileSz{ 18.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
 		D2D1_SIZE_F m_tileSzF{ tileSz, tileSz };
 
-		snakeLogic m_snakeLogic{ *this };
+		snake::logic m_snakeLogic{ *this };
 
 		static LRESULT CALLBACK wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 

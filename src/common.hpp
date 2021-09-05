@@ -36,7 +36,6 @@ namespace d2d
 	using rF = D2D1_RECT_F;
 	using rU = D2D1_RECT_U;
 
-
 }
 
 namespace dwrite
