@@ -10,6 +10,7 @@
 #include <string_view>
 #include <vector>
 #include <cstdint>
+#include <cstdlib>
 
 #ifdef _DEBUG
 	#include <cstdio>

@@ -45,6 +45,7 @@ namespace snake
 
 			void destroyAssets() noexcept;
 		} m_tiles;
+		friend struct tilesStruct;
 		
 		static constexpr std::size_t s_numFoodTiles{ 9 };
 
@@ -230,9 +231,12 @@ namespace snake
 		}
 
 		Tile makeSnakeTile(long cx, long cy) const noexcept;
+		void makeSnakeTile(Tile & t, long cx, long cy) const noexcept;
 		void moveTile(Tile & t, long cx, long cy) const noexcept;
 
 		void initSnakeData();
+
+		void genFood(snake::Tile & output, snake::Tile const & original = {}) const noexcept;
 
 		void restartGame();
 

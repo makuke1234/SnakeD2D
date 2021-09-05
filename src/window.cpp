@@ -2,6 +2,8 @@
 #include "resource.h"
 
 #include <tgmath.h>
+
+#include <ctime>
 #include <memory>
 
 LRESULT CALLBACK snake::Application::winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
@@ -302,7 +304,10 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 
 snake::Application::Application(LPCWSTR lpCmdArgs) noexcept
 	: m_lpCmdArgs(lpCmdArgs)
-{}
+{
+	// Initialise random number generator
+	std::srand(time(nullptr));
+}
 snake::Application::~Application() noexcept
 {
 	this->destroyAssets();
@@ -452,15 +457,14 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 		dx::SzU{ 8, 6 }
 	);
 
-	// Initialize snake data structure
-	this->initSnakeData();
-
-	// Create render target
+	// Create render target & initialise assets
 	if (!this->createAssets()) [[unlikely]]
 	{
 		return false;
 	}
 
+	// Initialize snake data structure
+	this->initSnakeData();
 
 	::ShowWindow(this->m_hwnd, nCmdShow);
 	::UpdateWindow(this->m_hwnd);
@@ -711,8 +715,7 @@ bool snake::Application::createAssets() noexcept
 		i.createAssets(this->m_bmpBrushes.snakeBodyTile);
 	}
 	this->m_tiles.snakeHeadTile.createAssets(this->m_bmpBrushes.snakeHeadTile);
-
-	this->m_tiles.snakeFoodTile.createAssets(this->m_bmpBrushes.snakeFoodTiles[5]);
+	this->m_tiles.snakeFoodTile.createAssets(this->m_bmpBrushes.snakeFoodTiles[std::rand() % this->s_numFoodTiles]);
 	
 	// Create fonts
 	if (!this->m_text.createAssets(this->m_pRT, this->m_pDWriteFactory)) [[unlikely]]
@@ -822,6 +825,14 @@ snake::Tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept
 		dx::SzU{ 1, 1 }
 	);
 }
+void snake::Application::makeSnakeTile(Tile & t, long cx, long cy) const noexcept
+{
+	t = static_cast<Tile const &>(Tile(
+		this->m_tileSzF,
+		this->calcToTile(cx, cy),
+		dx::SzU{ 1, 1 }
+	));
+}
 void snake::Application::moveTile(Tile & t, long cx, long cy) const noexcept
 {
 	t.move(this->calcToTile(cx, cy));
@@ -831,13 +842,48 @@ void snake::Application::initSnakeData()
 {
 	this->m_tiles.snakeBodyTiles.clear();
 
-	this->m_tiles.snakeHeadTile = this->makeSnakeTile(46, 25);
+	this->makeSnakeTile(this->m_tiles.snakeHeadTile, 46, 25);
 	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(47, 25));
 	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(48, 25));
 	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(49, 25));
 	this->m_tiles.snakeBodyTiles.emplace_back(this->makeSnakeTile(50, 25));
 
-	this->m_tiles.snakeFoodTile = this->makeSnakeTile(20, 19);
+	for (auto & i : this->m_tiles.snakeBodyTiles)
+	{
+		i.createAssets(this->m_bmpBrushes.snakeBodyTile);
+	}
+
+	this->genFood(this->m_tiles.snakeFoodTile);
+}
+
+void snake::Application::genFood(snake::Tile & output, snake::Tile const & original) const noexcept
+{
+	auto collides = [this, output, original]
+	{
+		auto outBounds = output.getBounds();
+		if (original.collides(outBounds) || this->m_tiles.snakeHeadTile.collides(outBounds))
+			return true;
+		
+		for (auto const & i : this->m_tiles.obstacleTiles)
+		{
+			if (i.collides(outBounds))
+				return true;
+		}
+		for (auto const & i : this->m_tiles.snakeBodyTiles)
+		{
+			if (i.collides(outBounds))
+				return true;
+		}
+
+		return false;
+	};
+
+	do
+	{
+		output = this->makeSnakeTile(std::rand() % long(this->fieldWidth), std::rand() % long(this->fieldHeight));
+	} while (collides());
+	output.destroyAssets();
+	output.createAssets(this->m_bmpBrushes.snakeFoodTiles[std::rand() % this->s_numFoodTiles]);
 }
 
 void snake::Application::restartGame()

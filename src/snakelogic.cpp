@@ -50,9 +50,11 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			}
 
 			// Check for "good" collisions with food
-			if (inf->This.m_appref.m_tiles.snakeFoodTile.collides(headRect))
+			auto & foodTile = inf->This.m_appref.m_tiles.snakeFoodTile;
+			if (foodTile.collides(headRect))
 			{
 				// Eat food and generate new
+				inf->This.m_appref.genFood(foodTile, foodTile);
 
 				// Play eating sound async
 				inf->This.m_appref.playSndAsync(IDW_SOUND_EAT);
