@@ -2,7 +2,7 @@
 #include "window.hpp"
 #include "resource.h"
 
-DWORD WINAPI snake::logic::sp_snakeLoopThread(LPVOID lp) noexcept
+DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
 	auto inf = static_cast<snakeInfo *>(lp);
 
@@ -123,19 +123,19 @@ sp_snakeLoopThreadFinish: ;
 	return 0;
 }
 
-snake::logic::logic(Application & parentRef) noexcept
+snake::Logic::Logic(Application & parentRef) noexcept
 	: m_appref(parentRef)
 {}
-snake::logic::~logic() noexcept
+snake::Logic::~Logic() noexcept
 {
 	this->stopSnakeLoop();
 }
 
-void snake::logic::changeDirection(direction newdir) noexcept
+void snake::Logic::changeDirection(direction newdir) noexcept
 {
 	this->m_sInfo.scoring.snakeDir = newdir;
 }
-void snake::logic::moveSnake() const noexcept
+void snake::Logic::moveSnake() const noexcept
 {
 
 	auto prevtile = this->m_appref.m_tiles.snakeHeadTile;
@@ -176,7 +176,7 @@ void snake::logic::moveSnake() const noexcept
 	this->m_appref.m_tiles.snakeBodyTiles.pop_back();
 	this->m_appref.m_tiles.snakeBodyTiles.front() = prevtile;
 }
-void snake::logic::moveAndGrowSnake() const
+void snake::Logic::moveAndGrowSnake() const
 {
 	auto tail{ this->m_appref.m_tiles.snakeBodyTiles.back() };
 	tail.createAssets(this->m_appref.m_bmpBrushes.snakeBodyTile);
@@ -184,7 +184,7 @@ void snake::logic::moveAndGrowSnake() const
 	this->m_appref.m_tiles.snakeBodyTiles.emplace_back(std::move(tail));
 }
 
-bool snake::logic::startSnakeLoop() noexcept
+bool snake::Logic::startSnakeLoop() noexcept
 {
 	if (this->m_sInfo.hThread != nullptr)
 		return true;
@@ -205,7 +205,7 @@ bool snake::logic::startSnakeLoop() noexcept
 			return true;
 	}
 }
-bool snake::logic::stopSnakeLoop() noexcept
+bool snake::Logic::stopSnakeLoop() noexcept
 {
 	if (this->m_sInfo.hThread == nullptr)
 		return false;
@@ -216,12 +216,12 @@ bool snake::logic::stopSnakeLoop() noexcept
 	
 	return true;
 }
-void snake::logic::stepNow() noexcept
+void snake::Logic::stepNow() noexcept
 {
 	this->m_sInfo.scoring.time = 0.f;
 }
 
-void snake::logic::resetScoring() noexcept
+void snake::Logic::resetScoring() noexcept
 {
 	this->m_sInfo.scoring = snakeInfo::scoringStruct();
 }

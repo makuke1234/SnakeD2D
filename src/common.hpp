@@ -19,29 +19,30 @@
 #endif
 
 // Direct2D type aliases
-namespace d2d
+namespace dx
 {
-	using factory = ID2D1Factory;
-	using hwndRT = ID2D1HwndRenderTarget;
-	using solidBrush = ID2D1SolidColorBrush;
-	using bm = ID2D1Bitmap;
-	using bmBrush = ID2D1BitmapBrush;
+	using Factory = ID2D1Factory;
+	using HwndRT = ID2D1HwndRenderTarget;
+	using SolidBrush = ID2D1SolidColorBrush;
+	using Bmp = ID2D1Bitmap;
+	using BmpBrush = ID2D1BitmapBrush;
 
-	using f = FLOAT;
-	using u32 = UINT32;
+	using F = FLOAT;
+	using U32 = UINT32;
 
-	using sF = D2D1_SIZE_F;
-	using sU = D2D1_SIZE_U;
+	using SzF = D2D1_SIZE_F;
+	using SzU = D2D1_SIZE_U;
 
-	using rF = D2D1_RECT_F;
-	using rU = D2D1_RECT_U;
+	using RectF = D2D1_RECT_F;
+	using RectU = D2D1_RECT_U;
 
+	using Color = D2D1_COLOR_F;
 }
 
-namespace dwrite
+namespace dw
 {
-	using factory = IDWriteFactory;
-	using txtFormat = IDWriteTextFormat;
+	using Factory = IDWriteFactory;
+	using TxtFormat = IDWriteTextFormat;
 
 }
 

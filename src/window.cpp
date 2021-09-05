@@ -4,7 +4,7 @@
 #include <tgmath.h>
 #include <memory>
 
-LRESULT CALLBACK snake::Application::wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
+LRESULT CALLBACK snake::Application::winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
 {
 	static snake::Application * This{};
 
@@ -133,19 +133,19 @@ void snake::Application::bmpsStruct::destroyAssets() noexcept
 }
 
 bool snake::Application::bmpBrushesStruct::createAssets(
-	ID2D1HwndRenderTarget * pRT,
+	dx::HwndRT * pRT,
 	Application::bmpsStruct const & bmps
 ) noexcept
 {
-	if ((this->obstacleTile = tile::CreateBmBrush(pRT, bmps.obstacleTile)) == nullptr) [[unlikely]]
+	if ((this->obstacleTile = Tile::createBmpBrush(pRT, bmps.obstacleTile)) == nullptr) [[unlikely]]
 		return false;
-	if ((this->snakeBodyTile = tile::CreateBmBrush(pRT, bmps.snakeBodyTile)) == nullptr) [[unlikely]]
+	if ((this->snakeBodyTile = Tile::createBmpBrush(pRT, bmps.snakeBodyTile)) == nullptr) [[unlikely]]
 		return false;
-	if ((this->snakeHeadTile = tile::CreateBmBrush(pRT, bmps.snakeHeadTile)) == nullptr) [[unlikely]]
+	if ((this->snakeHeadTile = Tile::createBmpBrush(pRT, bmps.snakeHeadTile)) == nullptr) [[unlikely]]
 		return false;
 	for (std::size_t i = 0; i < this->snakeFoodTiles.size(); ++i)
 	{
-		if ((this->snakeFoodTiles[i] = tile::CreateBmBrush(pRT, bmps.snakeFoodTiles[i])) == nullptr) [[unlikely]]
+		if ((this->snakeFoodTiles[i] = Tile::createBmpBrush(pRT, bmps.snakeFoodTiles[i])) == nullptr) [[unlikely]]
 			return false;
 	}
 
@@ -162,7 +162,7 @@ void snake::Application::bmpBrushesStruct::destroyAssets() noexcept
 	}
 }
 
-bool snake::Application::textStruct::createAssets(ID2D1HwndRenderTarget * pRT, IDWriteFactory * pWF) noexcept
+bool snake::Application::textStruct::createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept
 {
 	auto hr = pWF->CreateTextFormat(
 		L"Consolas",
@@ -192,7 +192,7 @@ void snake::Application::textStruct::destroyAssets() noexcept
 	snake::safeRelease(this->consolas16);
 }
 
-void snake::Application::textStruct::onRender(D2D1_SIZE_F const & tileSz, ID2D1HwndRenderTarget * pRT) const noexcept
+void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT) const noexcept
 {
 	// Draw example text
 	constexpr std::wstring_view testT{ L"test text" };
@@ -204,7 +204,7 @@ void snake::Application::textStruct::onRender(D2D1_SIZE_F const & tileSz, ID2D1H
 		testT.data(),
 		testT.size(),
 		this->consolas16,
-		D2D1::RectF(ltop.width, ltop.height, rbottom.width, rbottom.height),
+		dx::RectF{ ltop.width, ltop.height, rbottom.width, rbottom.height },
 		this->pTextBrush
 	);
 }
@@ -214,22 +214,25 @@ void snake::Application::p_calcDpiSpecific() noexcept
 	RECT clientR{}, windowR{};
 	::GetClientRect(this->m_hwnd, &clientR);
 	::GetWindowRect(this->m_hwnd, &windowR);
-	this->m_border = D2D1::SizeU(
-		(windowR.right  - windowR.left) - (clientR.right  - clientR.left),
-		(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
-	);
+	this->m_border = dx::SzU{
+		.width  = dx::U32(windowR.right  - windowR.left) - (clientR.right  - clientR.left),
+		.height = dx::U32(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
+	};
 
 	this->m_minSize.x = ceil(this->fromDipxi<float>(tileSz, this->fieldWidth)  + this->m_border.width);
 	this->m_minSize.y = ceil(this->fromDipyi<float>(tileSz, this->fieldHeight) + this->m_border.height);
 
-	auto [rX, rY] = this->fromDipxy<D2D1_SIZE_F>(tileSz, tileSz);
-	float dX = rX - float(long(rX)), dY = rY - float(long(rY));
-	this->m_tileSzF = D2D1::SizeF(tileSz - this->toDipx(dX), tileSz - this->toDipy(dY));
+	auto [rX, rY] = this->fromDipxy<dx::SzF>(tileSz, tileSz);
+	float dX = rX - float(dx::U32(rX)), dY = rY - float(dx::U32(rY));
+	this->m_tileSzF = dx::SzF{
+		.width  = tileSz - this->toDipx(dX),
+		.height = tileSz - this->toDipy(dY)
+	};
 }
 bool snake::Application::p_loadD2D1BitmapFromResource(
 	std::uint16_t resourceId,
-	D2D1_SIZE_U const & bmSize,
-	ID2D1Bitmap *& bmRef,
+	dx::SzU const & bmSize,
+	dx::Bmp *& bmRef,
 	void * opBuf,
 	std::size_t * bufSize
 ) noexcept
@@ -279,7 +282,7 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 
 
 	auto hr = this->m_pRT->CreateBitmap(
-		D2D1::SizeU(bmp.bmWidth, bmp.bmHeight),
+		dx::SzU{ .width = dx::U32(bmp.bmWidth), .height = dx::U32(bmp.bmHeight) },
 		accessBuf,
 		sizeof(COLORREF) * bmp.bmWidth,
 		D2D1::BitmapProperties(
@@ -338,7 +341,7 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 
 	w.cbSize = sizeof w;
 	w.style = CS_HREDRAW | CS_VREDRAW;
-	w.lpfnWndProc = &this->wproc;
+	w.lpfnWndProc = &this->winProc;
 	w.hInstance = hInst;
 	w.hCursor = ::LoadCursorW(nullptr, IDC_ARROW);
 	w.hIconSm = w.hIcon = ::LoadIconW(hInst, IDI_APPLICATION);
@@ -388,65 +391,65 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 	// Upper left
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(0.f, 0.f),
-		D2D1::SizeU(6, 1)
+		dx::SzF{ 0.f, 0.f },
+		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(0.f, this->m_tileSzF.height),
-		D2D1::SizeU(1, 5)
+		dx::SzF{ 0.f, this->m_tileSzF.height },
+		dx::SzU{ 1, 5 }
 	);
 
 	// Upper right
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(this->m_tileSzF.width * (this->fieldWidth - 6.f), 0.f),
-		D2D1::SizeU(6, 1)
+		dx::SzF{ this->m_tileSzF.width * (this->fieldWidth - 6.f), 0.f },
+		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(this->m_tileSzF.width * (this->fieldWidth - 1.f), this->m_tileSzF.height),
-		D2D1::SizeU(1, 5)
+		dx::SzF{ this->m_tileSzF.width * (this->fieldWidth - 1.f), this->m_tileSzF.height },
+		dx::SzU{ 1, 5 }
 	);
 
 	// Bottom left
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(0.f, this->m_tileSzF.height * (this->fieldHeight - 1.f)),
-		D2D1::SizeU(6, 1)
+		dx::SzF{ 0.f, this->m_tileSzF.height * (this->fieldHeight - 1.f) },
+		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(0.f, this->m_tileSzF.height * (this->fieldHeight - 6.f)),
-		D2D1::SizeU(1, 5)
+		dx::SzF{ 0.f, this->m_tileSzF.height * (this->fieldHeight - 6.f) },
+		dx::SzU{ 1, 5 }
 	);
 
 	// Bottom right
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(
+		dx::SzF{
 			this->m_tileSzF.width  * (this->fieldWidth  - 6.f),
 			this->m_tileSzF.height * (this->fieldHeight - 1.f)
-		),
-		D2D1::SizeU(6, 1)
+		},
+		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(
+		dx::SzF{
 			this->m_tileSzF.width  * (this->fieldWidth  - 1.f),
 			this->m_tileSzF.height * (this->fieldHeight - 6.f)
-		),
-		D2D1::SizeU(1, 5)
+		},
+		dx::SzU{ 1, 5 }
 	);
 
 	// Center piece
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		D2D1::SizeF(
+		dx::SzF{
 			this->m_tileSzF.width  * float(long(this->fieldWidth  - 8.f) / 2),
 			this->m_tileSzF.height * float(long(this->fieldHeight - 6.f) / 2)
-		),
-		D2D1::SizeU(8, 6)
+		},
+		dx::SzU{ 8, 6 }
 	);
 
 	// Initialize snake data structure
@@ -541,7 +544,7 @@ bool snake::Application::createAssets() noexcept
 
 	RECT r;
 	::GetClientRect(this->m_hwnd, &r);
-	D2D1_SIZE_U size = D2D1::SizeU(r.right - r.left, r.bottom - r.top);
+	dx::SzU size = dx::SzU{ .width = dx::U32(r.right - r.left), .height = dx::U32(r.bottom - r.top) };
 	auto hr = this->m_pD2DFactory->CreateHwndRenderTarget(
 		D2D1::RenderTargetProperties(),
 		D2D1::HwndRenderTargetProperties(this->m_hwnd, size),
@@ -557,7 +560,7 @@ bool snake::Application::createAssets() noexcept
 	
 	// Create bitmaps
 
-	auto [itWidth, itHeight] = this->fromDipxyi<D2D1_SIZE_U>(tileSz, tileSz);
+	auto [itWidth, itHeight] = this->fromDipxyi<dx::SzU>(tileSz, tileSz);
 	auto borderW = (itWidth * 2) / 15;
 	auto borderH = (itHeight * 2) / 15;
 
@@ -580,7 +583,7 @@ bool snake::Application::createAssets() noexcept
 		}
 	}
 	hr = this->m_pRT->CreateBitmap(
-		D2D1::SizeU(itWidth, itHeight),
+		dx::SzU{ itWidth, itHeight },
 		rawArray.get(),
 		itWidth * sizeof(COLORREF),
 		D2D1::BitmapProperties(
@@ -613,7 +616,7 @@ bool snake::Application::createAssets() noexcept
 		}
 	}
 	hr = this->m_pRT->CreateBitmap(
-		D2D1::SizeU(itWidth, itHeight),
+		dx::SzU{ itWidth, itHeight },
 		rawArray.get(),
 		itWidth * sizeof(COLORREF),
 		D2D1::BitmapProperties(
@@ -645,7 +648,7 @@ bool snake::Application::createAssets() noexcept
 		}
 	}
 	hr = this->m_pRT->CreateBitmap(
-		D2D1::SizeU(itWidth, itHeight),
+		dx::SzU{ itWidth, itHeight },
 		rawArray.get(),
 		itWidth * sizeof(COLORREF),
 		D2D1::BitmapProperties(
@@ -665,7 +668,7 @@ bool snake::Application::createAssets() noexcept
 	std::size_t tMemSize{};
 	if (!this->p_loadD2D1BitmapFromResource(
 		IDB_SNAKE_FOOD_TILE1,
-		D2D1::SizeU(itWidth, itHeight),
+		dx::SzU{ itWidth, itHeight },
 		this->m_bmps.snakeFoodTiles[0],
 		nullptr,
 		&tMemSize
@@ -682,7 +685,7 @@ bool snake::Application::createAssets() noexcept
 	{
 		if (!this->p_loadD2D1BitmapFromResource(
 			IDB_SNAKE_FOOD_TILE1 + i,
-			D2D1::SizeU(itWidth, itHeight),
+			dx::SzU{ itWidth, itHeight },
 			this->m_bmps.snakeFoodTiles[i],
 			picMem.get()
 		))
@@ -753,11 +756,11 @@ void snake::Application::onRender() noexcept
 	auto [width, height] = POINT{ LONG(fwidth), LONG(fheight) };
 	*/
 
-	tile::onRender(this->m_tiles.obstacleTiles , this->m_pRT);
+	Tile::onRender(this->m_tiles.obstacleTiles , this->m_pRT);
 	// Render food tile first
 	this->m_tiles.snakeFoodTile.onRender(this->m_pRT);
 
-	tile::onRender(this->m_tiles.snakeBodyTiles, this->m_pRT);
+	Tile::onRender(this->m_tiles.snakeBodyTiles, this->m_pRT);
 	this->m_tiles.snakeHeadTile.onRender(this->m_pRT);
 
 	this->m_text.onRender(this->m_tileSzF, this->m_pRT);
@@ -771,26 +774,26 @@ void snake::Application::onResize(UINT width, UINT height) const noexcept
 {
 	if (this->m_pRT) [[likely]]
 	{
-		this->m_pRT->Resize(D2D1::SizeU(width, height));
+		this->m_pRT->Resize(dx::SzU{ width, height });
 	}
 }
 
 LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) noexcept
 {
-	logic::direction dir{};
+	Logic::direction dir{};
 	switch (wp)
 	{
 	case VK_LEFT:
-		dir = logic::direction::left;
+		dir = Logic::direction::left;
 		break;
 	case VK_RIGHT:
-		dir = logic::direction::right;
+		dir = Logic::direction::right;
 		break;
 	case VK_UP:
-		dir = logic::direction::up;
+		dir = Logic::direction::up;
 		break;
 	case VK_DOWN:
-		dir = logic::direction::down;
+		dir = Logic::direction::down;
 		break;
 	default:
 		return 0;
@@ -798,7 +801,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 
 	// Check if the user wants to make a valid move
 	if (dir != this->m_snakeLogic.m_sInfo.scoring.snakeDir &&
-		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), logic::direction_enum_size))
+		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), Logic::direction_enum_size))
 	{
 		this->m_snakeLogic.changeDirection(dir);
 		this->m_snakeLogic.stepNow();
@@ -811,15 +814,15 @@ LRESULT snake::Application::onKeyRelease(WPARAM wp, LPARAM lp) noexcept
 	return ::DefWindowProcW(this->m_hwnd, WM_KEYUP, wp, lp);
 }
 
-snake::tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept
+snake::Tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept
 {
-	return tile(
+	return Tile(
 		this->m_tileSzF,
 		this->calcToTile(cx, cy),
-		D2D1::SizeU(1, 1)
+		dx::SzU{ 1, 1 }
 	);
 }
-void snake::Application::moveTile(tile & t, long cx, long cy) const noexcept
+void snake::Application::moveTile(Tile & t, long cx, long cy) const noexcept
 {
 	t.move(this->calcToTile(cx, cy));
 }

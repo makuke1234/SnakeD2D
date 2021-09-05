@@ -1,22 +1,22 @@
 #include "tiles.hpp"
 #include "window.hpp"
 
-snake::tile::tile(D2D1_SIZE_F const & tileSz, D2D1_SIZE_F const & startpos, D2D1_SIZE_U const & numTiles) noexcept
-	: m_tilesRect(D2D1::RectF(
-		startpos.width,
-		startpos.height,
-		startpos.width + tileSz.width * FLOAT(numTiles.width),
-		startpos.height + tileSz.height * FLOAT(numTiles.height)
-	))
+snake::Tile::Tile(dx::SzF const & tileSz, dx::SzF const & startpos, dx::SzU const & numTiles) noexcept
+	: m_tilesRect{
+		.left   = startpos.width,
+		.top    = startpos.height,
+		.right  = startpos.width  + tileSz.width  * dx::F(numTiles.width),
+		.bottom = startpos.height + tileSz.height * dx::F(numTiles.height)
+	}
 {}
-snake::tile::~tile() noexcept
+snake::Tile::~Tile() noexcept
 {
 	this->destroyAssets();
 }
 
-[[nodiscard]] ID2D1BitmapBrush * snake::tile::CreateBmBrush(ID2D1HwndRenderTarget * pRT, ID2D1Bitmap * pBm) noexcept
+[[nodiscard]] dx::BmpBrush * snake::Tile::createBmpBrush(dx::HwndRT * pRT, dx::Bmp * pBm) noexcept
 {
-	ID2D1BitmapBrush * bmBrush{ nullptr };
+	dx::BmpBrush * bmBrush{ nullptr };
 	auto hr = pRT->CreateBitmapBrush(
 		pBm,
 		&bmBrush
@@ -30,18 +30,18 @@ snake::tile::~tile() noexcept
 
 	return bmBrush;
 }
-void snake::tile::createAssets(ID2D1BitmapBrush * pBmBrush) noexcept
+void snake::Tile::createAssets(dx::BmpBrush * pBmBrush) noexcept
 {
 	if (this->m_pBmBrush != nullptr)
 		return;
 	this->m_pBmBrush = pBmBrush;	
 }
-void snake::tile::destroyAssets() noexcept
+void snake::Tile::destroyAssets() noexcept
 {
 	this->m_pBmBrush = nullptr;
 }
 
-void snake::tile::onRender(ID2D1HwndRenderTarget * pRT) const noexcept
+void snake::Tile::onRender(dx::HwndRT * pRT) const noexcept
 {
 	pRT->FillRectangle(
 		this->m_tilesRect,
@@ -49,11 +49,11 @@ void snake::tile::onRender(ID2D1HwndRenderTarget * pRT) const noexcept
 	);
 }
 
-[[nodiscard]] D2D1_SIZE_U snake::tile::getCoords(D2D1_SIZE_F const & tileSz) const noexcept
+[[nodiscard]] dx::SzU snake::Tile::getCoords(dx::SzF const & tileSz) const noexcept
 {
 	return snake::Application::s_calcFromTile(tileSz, this->m_tilesRect.left, this->m_tilesRect.top);
 }
-void snake::tile::move(D2D1_SIZE_F const & newpos) noexcept
+void snake::Tile::move(dx::SzF const & newpos) noexcept
 {
 	auto xdelta = this->m_tilesRect.right  - this->m_tilesRect.left,
 	     ydelta = this->m_tilesRect.bottom - this->m_tilesRect.top;

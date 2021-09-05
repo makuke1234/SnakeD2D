@@ -6,7 +6,7 @@ namespace snake
 {
 	class Application;
 
-	class logic
+	class Logic
 	{
 	public:
 		enum class direction : std::int8_t
@@ -25,7 +25,7 @@ namespace snake
 
 		struct snakeInfo
 		{
-			logic & This;
+			Logic & This;
 			enum class modes : std::uint8_t
 			{
 				normal,
@@ -47,9 +47,9 @@ namespace snake
 		static DWORD WINAPI sp_snakeLoopThread(LPVOID lp) noexcept;
 
 	public:
-		logic() = delete;
-		logic(Application & parentRef) noexcept;
-		~logic() noexcept;
+		Logic() = delete;
+		Logic(Application & parentRef) noexcept;
+		~Logic() noexcept;
 
 		void changeDirection(direction newdir) noexcept;
 		void moveSnake() const noexcept;

@@ -12,7 +12,7 @@ namespace snake
 	class Application
 	{
 	private:
-		friend class logic;
+		friend class Logic;
 
 		static constexpr std::wstring_view applicationName{ L"SnakeD2D" },
 			className{ L"SnakeDirect2DClass" };
@@ -33,15 +33,15 @@ namespace snake
 		HINSTANCE m_hInst{ nullptr };
 		LPCWSTR m_lpCmdArgs;
 		HWND m_hwnd{ nullptr };
-		ID2D1Factory * m_pD2DFactory{ nullptr };
-		IDWriteFactory * m_pDWriteFactory{ nullptr };
-		ID2D1HwndRenderTarget * m_pRT{ nullptr };
+		dx::Factory * m_pD2DFactory{ nullptr };
+		dw::Factory * m_pDWriteFactory{ nullptr };
+		dx::HwndRT * m_pRT{ nullptr };
 
 		struct tilesStruct
 		{
-			std::vector<tile> obstacleTiles;
-			std::deque<tile> snakeBodyTiles;
-			tile snakeHeadTile, snakeFoodTile;
+			std::vector<Tile> obstacleTiles;
+			std::deque<Tile> snakeBodyTiles;
+			Tile snakeHeadTile, snakeFoodTile;
 
 			void destroyAssets() noexcept;
 		} m_tiles;
@@ -50,48 +50,48 @@ namespace snake
 
 		struct bmpsStruct
 		{		
-			ID2D1Bitmap * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
+			dx::Bmp * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
 				* snakeHeadTile{ nullptr };
-			std::array<ID2D1Bitmap *, s_numFoodTiles> snakeFoodTiles;
+			std::array<dx::Bmp *, s_numFoodTiles> snakeFoodTiles;
 
 			void destroyAssets() noexcept;
 		} m_bmps;
 		struct bmpBrushesStruct
 		{
-			ID2D1BitmapBrush * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
+			dx::BmpBrush * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
 				* snakeHeadTile{ nullptr };
-			std::array<ID2D1BitmapBrush *, s_numFoodTiles> snakeFoodTiles;
+			std::array<dx::BmpBrush *, s_numFoodTiles> snakeFoodTiles;
 			
-			bool createAssets(ID2D1HwndRenderTarget * pRT, bmpsStruct const & bmps) noexcept;
+			bool createAssets(dx::HwndRT * pRT, bmpsStruct const & bmps) noexcept;
 			void destroyAssets() noexcept;
 		} m_bmpBrushes;
 
 		struct textStruct
 		{
-			IDWriteTextFormat * consolas16{ nullptr };
-			ID2D1SolidColorBrush * pTextBrush{ nullptr };
+			dw::TxtFormat * consolas16{ nullptr };
+			dx::SolidBrush * pTextBrush{ nullptr };
 
-			bool createAssets(ID2D1HwndRenderTarget * pRT, IDWriteFactory * pWF) noexcept;
+			bool createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept;
 			void destroyAssets() noexcept;
 
-			void onRender(D2D1_SIZE_F const & tileSz, ID2D1HwndRenderTarget * pRT) const noexcept;
+			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT) const noexcept;
 		} m_text;
 
-		FLOAT m_dpiX{ 96.f }, m_dpiY{ 96.f };
-		D2D1_SIZE_U m_border{};
+		dx::F m_dpiX{ 96.f }, m_dpiY{ 96.f };
+		dx::SzU m_border{};
 		POINT m_minSize{ .x = 640, .y = 480 };
-		static constexpr FLOAT tileSz{ 18.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
-		D2D1_SIZE_F m_tileSzF{ tileSz, tileSz };
+		static constexpr dx::F tileSz{ 18.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
+		dx::SzF m_tileSzF{ tileSz, tileSz };
 
-		snake::logic m_snakeLogic{ *this };
+		snake::Logic m_snakeLogic{ *this };
 
-		static LRESULT CALLBACK wproc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
+		static LRESULT CALLBACK winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 
 		void p_calcDpiSpecific() noexcept;
 		bool p_loadD2D1BitmapFromResource(
 			std::uint16_t resourceId,
-			D2D1_SIZE_U const & bmSize,
-			ID2D1Bitmap *& bmRef,
+			dx::SzU const & bmSize,
+			dx::Bmp *& bmRef,
 			void * opBuf = nullptr,
 			std::size_t * bufSize = nullptr
 		) noexcept;
@@ -108,23 +108,23 @@ namespace snake
 		template<class T>
 		[[nodiscard]] T fromDipx(T input) const noexcept
 		{
-			return T((FLOAT(input) * this->m_dpiX) / 96.f);
+			return T((dx::F(input) * this->m_dpiX) / 96.f);
 		}
 		template<class T>
 		[[nodiscard]] T fromDipy(T input) const noexcept
 		{
-			return T((FLOAT(input) * this->m_dpiY) / 96.f);
+			return T((dx::F(input) * this->m_dpiY) / 96.f);
 		}
 
 		template<class T>
 		[[nodiscard]] T toDipx(T input) const noexcept
 		{
-			return T(FLOAT(input) * 96.f / this->m_dpiX);
+			return T(dx::F(input) * 96.f / this->m_dpiX);
 		}
 		template<class T>
 		[[nodiscard]] T toDipy(T input ) const noexcept
 		{
-			return T(FLOAT(input) * 96.f / this->m_dpiY);
+			return T(dx::F(input) * 96.f / this->m_dpiY);
 		}
 
 		template<class retT, class T>
@@ -194,7 +194,7 @@ namespace snake
 		LRESULT onKeyPress(WPARAM wp, LPARAM lp) noexcept;
 		LRESULT onKeyRelease(WPARAM wp, LPARAM lp) noexcept;
 
-		[[nodiscard]] static constexpr D2D1_SIZE_F s_calcToTile(D2D1_SIZE_F const & tileSz, long cx, long cy) noexcept
+		[[nodiscard]] static constexpr dx::SzF s_calcToTile(dx::SzF const & tileSz, long cx, long cy) noexcept
 		{
 			return { .width = tileSz.width * float(cx), .height = tileSz.height * float(cy) };
 		}
@@ -206,15 +206,15 @@ namespace snake
 		{
 			return this->m_tileSzF.height * float(cy);
 		}
-		[[nodiscard]] constexpr D2D1_SIZE_F calcToTile(long cx, long cy) const noexcept
+		[[nodiscard]] constexpr dx::SzF calcToTile(long cx, long cy) const noexcept
 		{
 			return this->s_calcToTile(this->m_tileSzF, cx, cy);
 		}
 
 
-		[[nodiscard]] static constexpr D2D1_SIZE_U s_calcFromTile(D2D1_SIZE_F const & tileSz, float x, float y) noexcept
+		[[nodiscard]] static constexpr dx::SzU s_calcFromTile(dx::SzF const & tileSz, float x, float y) noexcept
 		{
-			return { .width = UINT32(x / tileSz.width + .5f), .height = UINT32(y / tileSz.height + .5f) };
+			return { .width = dx::U32(x / tileSz.width + .5f), .height = dx::U32(y / tileSz.height + .5f) };
 		}
 		[[nodiscard]] constexpr long calcFromTilex(float x) const noexcept
 		{
@@ -224,13 +224,13 @@ namespace snake
 		{
 			return long(y / this->m_tileSzF.height);
 		}
-		[[nodiscard]] constexpr D2D1_SIZE_U calcFromTile(float x, float y) const noexcept
+		[[nodiscard]] constexpr dx::SzU calcFromTile(float x, float y) const noexcept
 		{
 			return this->s_calcFromTile(this->m_tileSzF, x, y);
 		}
 
-		tile makeSnakeTile(long cx, long cy) const noexcept;
-		void moveTile(tile & t, long cx, long cy) const noexcept;
+		Tile makeSnakeTile(long cx, long cy) const noexcept;
+		void moveTile(Tile & t, long cx, long cy) const noexcept;
 
 		void initSnakeData();
 
