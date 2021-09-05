@@ -31,7 +31,7 @@ namespace snake
 		};
 
 		HINSTANCE m_hInst{ nullptr };
-		PSTR m_cmdArgs;
+		LPCWSTR m_lpCmdArgs;
 		HWND m_hwnd{ nullptr };
 		ID2D1Factory * m_pD2DFactory{ nullptr };
 		IDWriteFactory * m_pDWriteFactory{ nullptr };
@@ -48,7 +48,7 @@ namespace snake
 		
 		static constexpr std::size_t s_numFoodTiles{ 9 };
 
-		struct bitmapsStruct
+		struct bmpsStruct
 		{		
 			ID2D1Bitmap * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
 				* snakeHeadTile{ nullptr };
@@ -56,13 +56,13 @@ namespace snake
 
 			void destroyAssets() noexcept;
 		} m_bmps;
-		struct bitmapBrushesStruct
+		struct bmpBrushesStruct
 		{
 			ID2D1BitmapBrush * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
 				* snakeHeadTile{ nullptr };
 			std::array<ID2D1BitmapBrush *, s_numFoodTiles> snakeFoodTiles;
 			
-			bool createAssets(ID2D1HwndRenderTarget * pRT, bitmapsStruct const & bmps) noexcept;
+			bool createAssets(ID2D1HwndRenderTarget * pRT, bmpsStruct const & bmps) noexcept;
 			void destroyAssets() noexcept;
 		} m_bmpBrushes;
 
@@ -99,7 +99,7 @@ namespace snake
 	public:
 		// Disable default constructor
 		Application() = delete;
-		Application(PSTR cmdArgs) noexcept;
+		Application(LPCWSTR lpCmdArgs) noexcept;
 		// Disable copy constructors
 		Application(Application const &) = delete;
 		Application & operator=(Application const &) = delete;

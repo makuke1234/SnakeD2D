@@ -121,7 +121,7 @@ void snake::Application::tilesStruct::destroyAssets() noexcept
 	this->snakeFoodTile.destroyAssets();
 }
 
-void snake::Application::bitmapsStruct::destroyAssets() noexcept
+void snake::Application::bmpsStruct::destroyAssets() noexcept
 {
 	snake::safeRelease(this->obstacleTile);
 	snake::safeRelease(this->snakeBodyTile);
@@ -132,9 +132,9 @@ void snake::Application::bitmapsStruct::destroyAssets() noexcept
 	}
 }
 
-bool snake::Application::bitmapBrushesStruct::createAssets(
+bool snake::Application::bmpBrushesStruct::createAssets(
 	ID2D1HwndRenderTarget * pRT,
-	Application::bitmapsStruct const & bmps
+	Application::bmpsStruct const & bmps
 ) noexcept
 {
 	if ((this->obstacleTile = tile::CreateBmBrush(pRT, bmps.obstacleTile)) == nullptr) [[unlikely]]
@@ -151,7 +151,7 @@ bool snake::Application::bitmapBrushesStruct::createAssets(
 
 	return true;
 }
-void snake::Application::bitmapBrushesStruct::destroyAssets() noexcept
+void snake::Application::bmpBrushesStruct::destroyAssets() noexcept
 {
 	snake::safeRelease(this->obstacleTile);
 	snake::safeRelease(this->snakeBodyTile);
@@ -297,8 +297,8 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 	return true;
 }
 
-snake::Application::Application(PSTR cmdArgs) noexcept
-	: m_cmdArgs(cmdArgs)
+snake::Application::Application(LPCWSTR lpCmdArgs) noexcept
+	: m_lpCmdArgs(lpCmdArgs)
 {}
 snake::Application::~Application() noexcept
 {

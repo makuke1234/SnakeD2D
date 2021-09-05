@@ -1,9 +1,9 @@
 #include "common.hpp"
 #include "window.hpp"
 
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, PSTR cmdArgs, int nCmdShow)
+int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE, PWSTR lpCmdArgs, int nCmdShow)
 {
-	snake::Application app(cmdArgs);
+	snake::Application app(lpCmdArgs);
 	if (app.initApp(hInst, nCmdShow)) [[likely]]
 		return app.msgLoop();
 	else [[unlikely]]
