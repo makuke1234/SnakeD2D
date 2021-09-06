@@ -75,7 +75,7 @@ namespace snake
 			bool createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept;
 			void destroyAssets() noexcept;
 
-			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT) const noexcept;
+			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept;
 		} m_text;
 
 		dx::F m_dpiX{ 96.f }, m_dpiY{ 96.f };
@@ -236,7 +236,7 @@ namespace snake
 
 		void initSnakeData();
 
-		void genFood(snake::Tile & output, snake::Tile const & original = {}) const noexcept;
+		void genFood(snake::Tile & output) const noexcept;
 
 		void restartGame();
 

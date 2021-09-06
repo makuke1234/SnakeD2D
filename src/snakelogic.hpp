@@ -55,6 +55,7 @@ namespace snake
 		void moveSnake() const noexcept;
 		void moveAndGrowSnake() const;
 
+
 		//
 		//	Starts snake loop thread
 		//	@returns 'false' only and only if thread creation fails, otherwise 'true'

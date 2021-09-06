@@ -194,17 +194,18 @@ void snake::Application::textStruct::destroyAssets() noexcept
 	snake::safeRelease(this->consolas16);
 }
 
-void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT) const noexcept
+void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept
 {
-	// Draw example text
-	constexpr std::wstring_view testT{ L"test text" };
+	// Draw score
+	std::wstring txt{ L"Score: " };
+	txt += std::to_wstring(scoring.score);
 
-	auto ltop{ Application::s_calcToTile(tileSz, 10, 10) };
-	auto rbottom{ Application::s_calcToTile(tileSz, 30, 13) };
+	auto ltop{ Application::s_calcToTile(tileSz, 50, 1) };
+	auto rbottom{ Application::s_calcToTile(tileSz, 62, 2) };
 
 	pRT->DrawTextW(
-		testT.data(),
-		testT.size(),
+		txt.c_str(),
+		dx::U32(txt.size()),
 		this->consolas16,
 		dx::RectF{ ltop.width, ltop.height, rbottom.width, rbottom.height },
 		this->pTextBrush
@@ -221,8 +222,8 @@ void snake::Application::p_calcDpiSpecific() noexcept
 		.height = dx::U32(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
 	};
 
-	this->m_minSize.x = ceil(this->fromDipxi<float>(tileSz, this->fieldWidth)  + this->m_border.width);
-	this->m_minSize.y = ceil(this->fromDipyi<float>(tileSz, this->fieldHeight) + this->m_border.height);
+	this->m_minSize.x = LONG(std::ceil(this->fromDipxi<float>(tileSz, this->fieldWidth)  + float(this->m_border.width)));
+	this->m_minSize.y = LONG(std::ceil(this->fromDipyi<float>(tileSz, this->fieldHeight) + float(this->m_border.height)));
 
 	auto [rX, rY] = this->fromDipxy<dx::SzF>(tileSz, tileSz);
 	float dX = rX - float(dx::U32(rX)), dY = rY - float(dx::U32(rY));
@@ -259,7 +260,7 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 	bmpH.biBitCount    = 8 * sizeof(COLORREF);
 	bmpH.biCompression = BI_RGB;
 
-	bmpH.biSizeImage = sizeof(COLORREF) * bmp.bmWidth * bmp.bmHeight;
+	bmpH.biSizeImage = DWORD(sizeof(COLORREF) * bmp.bmWidth * bmp.bmHeight);
 
 	if (bufSize != nullptr)
 		*bufSize = bmpH.biSizeImage;
@@ -286,11 +287,11 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 	auto hr = this->m_pRT->CreateBitmap(
 		dx::SzU{ .width = dx::U32(bmp.bmWidth), .height = dx::U32(bmp.bmHeight) },
 		accessBuf,
-		sizeof(COLORREF) * bmp.bmWidth,
+		dx::U32(sizeof(COLORREF) * bmp.bmWidth),
 		D2D1::BitmapProperties(
 			D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE),
-			this->m_dpiX * bmp.bmWidth  / bmSize.width,
-			this->m_dpiY * bmp.bmHeight / bmSize.height
+			this->m_dpiX * dx::F(bmp.bmWidth)  / dx::F(bmSize.width),
+			this->m_dpiY * dx::F(bmp.bmHeight) / dx::F(bmSize.height)
 		),
 		&bmRef
 	);
@@ -306,7 +307,7 @@ snake::Application::Application(LPCWSTR lpCmdArgs) noexcept
 	: m_lpCmdArgs(lpCmdArgs)
 {
 	// Initialise random number generator
-	std::srand(time(nullptr));
+	std::srand(unsigned(time(nullptr)));
 }
 snake::Application::~Application() noexcept
 {
@@ -688,7 +689,7 @@ bool snake::Application::createAssets() noexcept
 	for (std::size_t i = 1; i < this->m_bmps.snakeFoodTiles.size(); ++i)
 	{
 		if (!this->p_loadD2D1BitmapFromResource(
-			IDB_SNAKE_FOOD_TILE1 + i,
+			std::uint16_t(IDB_SNAKE_FOOD_TILE1 + i),
 			dx::SzU{ itWidth, itHeight },
 			this->m_bmps.snakeFoodTiles[i],
 			picMem.get()
@@ -766,7 +767,7 @@ void snake::Application::onRender() noexcept
 	Tile::onRender(this->m_tiles.snakeBodyTiles, this->m_pRT);
 	this->m_tiles.snakeHeadTile.onRender(this->m_pRT);
 
-	this->m_text.onRender(this->m_tileSzF, this->m_pRT);
+	this->m_text.onRender(this->m_tileSzF, this->m_pRT, this->m_snakeLogic.m_sInfo.scoring);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->destroyAssets();
@@ -856,12 +857,12 @@ void snake::Application::initSnakeData()
 	this->genFood(this->m_tiles.snakeFoodTile);
 }
 
-void snake::Application::genFood(snake::Tile & output, snake::Tile const & original) const noexcept
+void snake::Application::genFood(snake::Tile & output) const noexcept
 {
-	auto collides = [this, output, original]
+	auto collides = [this](snake::Tile const& output) noexcept -> bool
 	{
 		auto outBounds = output.getBounds();
-		if (original.collides(outBounds) || this->m_tiles.snakeHeadTile.collides(outBounds))
+		if (this->m_tiles.snakeHeadTile.collides(outBounds))
 			return true;
 		
 		for (auto const & i : this->m_tiles.obstacleTiles)
@@ -881,7 +882,7 @@ void snake::Application::genFood(snake::Tile & output, snake::Tile const & origi
 	do
 	{
 		output = this->makeSnakeTile(std::rand() % long(this->fieldWidth), std::rand() % long(this->fieldHeight));
-	} while (collides());
+	} while (collides(output));
 	output.destroyAssets();
 	output.createAssets(this->m_bmpBrushes.snakeFoodTiles[std::rand() % this->s_numFoodTiles]);
 }

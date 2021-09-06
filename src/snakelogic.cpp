@@ -2,6 +2,8 @@
 #include "window.hpp"
 #include "resource.h"
 
+#include <ctime>
+
 DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
 	auto inf = static_cast<snakeInfo *>(lp);
@@ -10,8 +12,9 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 	{
 		while (inf->scoring.time > 0.f)
 		{
-			Sleep(50);
-			inf->scoring.time -= .05f;
+			auto st = std::clock();
+			Sleep(20);
+			inf->scoring.time -= float(std::clock() - st) / 1000.f;
 		}
 		inf->scoring.time = inf->scoring.curTime;
 
@@ -54,13 +57,27 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			if (foodTile.collides(headRect))
 			{
 				// Eat food and generate new
-				inf->This.m_appref.genFood(foodTile, foodTile);
+				inf->This.m_appref.genFood(foodTile);
 
 				// Play eating sound async
 				inf->This.m_appref.playSndAsync(IDW_SOUND_EAT);
 
 				// Grow snake
 				inf->This.moveAndGrowSnake();
+
+				// Make time unit smaller
+				inf->This.m_sInfo.scoring.score += 1;
+
+				auto forward = [](float x)
+				{
+					return 1.f / x + .1f;
+				};
+				auto backward = [](float x)
+				{
+					return 1.f / (x - .1f);
+				};
+
+				inf->This.m_sInfo.scoring.curTime = forward(backward(inf->This.m_sInfo.scoring.curTime) + .1f);
 			}
 			else
 			{
@@ -142,7 +159,7 @@ void snake::Logic::moveSnake() const noexcept
 
 	auto prevtile = this->m_appref.m_tiles.snakeHeadTile;
 	auto [uposx, uposy] = prevtile.getCoords(this->m_appref.m_tileSzF);
-	auto posx{ std::intptr_t(uposx) }, posy{ std::intptr_t(uposy) };
+	auto posx{ long(uposx) }, posy{ long(uposy) };
 	
 	switch (this->m_sInfo.scoring.snakeDir)
 	{

@@ -43,6 +43,8 @@ void snake::Tile::destroyAssets() noexcept
 
 void snake::Tile::onRender(dx::HwndRT * pRT) const noexcept
 {
+	if (this->m_pBmBrush == nullptr)
+		return;
 	pRT->FillRectangle(
 		this->m_tilesRect,
 		this->m_pBmBrush
