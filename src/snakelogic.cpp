@@ -70,11 +70,11 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 				auto forward = [](float x)
 				{
-					return 1.f / x + .1f;
+					return 1.f / x + .05f;
 				};
 				auto backward = [](float x)
 				{
-					return 1.f / (x - .1f);
+					return 1.f / (x - .05f);
 				};
 
 				inf->This.m_sInfo.scoring.curTime = forward(backward(inf->This.m_sInfo.scoring.curTime) + .1f);

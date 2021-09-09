@@ -345,12 +345,12 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 	// Initialise application class
 	WNDCLASSEXW w{};
 
-	w.cbSize = sizeof w;
-	w.style = CS_HREDRAW | CS_VREDRAW;
-	w.lpfnWndProc = &this->winProc;
-	w.hInstance = hInst;
-	w.hCursor = ::LoadCursorW(nullptr, IDC_ARROW);
-	w.hIconSm = w.hIcon = ::LoadIconW(hInst, IDI_APPLICATION);
+	w.cbSize        = sizeof w;
+	w.style         = CS_HREDRAW | CS_VREDRAW;
+	w.lpfnWndProc   = &this->winProc;
+	w.hInstance     = hInst;
+	w.hCursor       = ::LoadCursorW(nullptr, IDC_ARROW);
+	w.hIconSm       = w.hIcon = ::LoadIconW(hInst, IDI_APPLICATION);
 	w.lpszClassName = this->className.data();
 	
 	if (!::RegisterClassExW(&w)) [[unlikely]]

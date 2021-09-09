@@ -36,7 +36,7 @@ namespace snake
 			bool endSignal{ false };
 			struct scoringStruct
 			{
-				float time{ 0.f }, curTime{ .5f };
+				float time{ 0.f }, curTime{ .2f };
 				std::uint32_t score{ 0 };
 				static constexpr std::uint32_t winningScore{ 1000000 };
 				modes mode{ modes::normal };
