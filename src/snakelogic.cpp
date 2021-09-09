@@ -3,6 +3,7 @@
 #include "resource.h"
 
 #include <ctime>
+#include <cmath>
 
 DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
@@ -13,8 +14,8 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 		while (inf->scoring.time > 0.f)
 		{
 			auto st = std::clock();
-			Sleep(20);
-			inf->scoring.time -= float(std::clock() - st) / 1000.f;
+			::Sleep(20);
+			inf->scoring.time -= float(std::clock() - st) / CLOCKS_PER_SEC;
 		}
 		inf->scoring.time = inf->scoring.curTime;
 
@@ -68,16 +69,7 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 				// Make time unit smaller
 				inf->This.m_sInfo.scoring.score += 1;
 
-				auto forward = [](float x)
-				{
-					return 1.f / x + .05f;
-				};
-				auto backward = [](float x)
-				{
-					return 1.f / (x - .05f);
-				};
-
-				inf->This.m_sInfo.scoring.curTime = forward(backward(inf->This.m_sInfo.scoring.curTime) + .1f);
+				inf->This.m_sInfo.scoring.curTime = .5f / std::sqrt(float(inf->This.m_sInfo.scoring.score + 5)) + .05f;
 			}
 			else
 			{
@@ -99,14 +91,13 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			// Draw game over text
 
-
 			// Update screen
 			::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
 			while (inf->scoring.mode == snakeInfo::modes::game_over)
 			{
-				Sleep(50);
+				::Sleep(50);
 				if (inf->endSignal)
 					goto sp_snakeLoopThreadFinish;
 			}
@@ -118,14 +109,13 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			// Draw winning text
 
-
 			// Update screen
 			::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
 			while (inf->scoring.mode == snakeInfo::modes::win)
 			{
-				Sleep(50);
+				::Sleep(50);
 				if (inf->endSignal)
 					goto sp_snakeLoopThreadFinish;
 			}

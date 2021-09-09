@@ -49,6 +49,8 @@ namespace snake
 		
 		static constexpr std::size_t s_numFoodTiles{ 9 };
 
+		snake::Logic m_snakeLogic{ *this };
+		
 		struct bmpsStruct
 		{		
 			dx::Bmp * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
@@ -69,14 +71,20 @@ namespace snake
 
 		struct textStruct
 		{
-			dw::TxtFormat * consolas16{ nullptr };
-			dx::SolidBrush * pTextBrush{ nullptr };
+			dw::TxtFormat * consolas16{ nullptr }, * consolas24CenteredBold{ nullptr };
+			dx::SolidBrush * pScoreBrush{ nullptr }, * pWinBrush{ nullptr }, * pLoseBrush{ nullptr };
+
+			Logic::snakeInfo::modes& m_refMode;
+
+			constexpr textStruct(Logic::snakeInfo::modes& refMode) noexcept
+				: m_refMode(refMode)
+			{}
 
 			bool createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept;
 			void destroyAssets() noexcept;
 
 			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept;
-		} m_text;
+		} m_text{ m_snakeLogic.m_sInfo.scoring.mode };
 
 		dx::F m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		dx::SzU m_border{};
@@ -84,7 +92,6 @@ namespace snake
 		static constexpr dx::F tileSz{ 18.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
 		dx::SzF m_tileSzF{ tileSz, tileSz };
 
-		snake::Logic m_snakeLogic{ *this };
 
 		static LRESULT CALLBACK winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 

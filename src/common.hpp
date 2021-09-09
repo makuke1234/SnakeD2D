@@ -72,6 +72,12 @@ namespace snake
 		return (in == 1 || in == (limit - 1));
 	}
 
+	template<class Combined, class Source>
+	[[nodiscard]] constexpr Combined combine(Source s1, Source s2) noexcept
+	{
+		return Combined{ s1.width, s1.height, s2.width, s2.height };
+	}
+
 	void playSndRsc(std::uint16_t resource, HINSTANCE hInst) noexcept;
 	void playSndRscAsync(std::uint16_t resource, HINSTANCE hInst) noexcept;
 	void stopSndRscAsync() noexcept;

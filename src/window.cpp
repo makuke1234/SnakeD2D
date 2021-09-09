@@ -172,44 +172,200 @@ bool snake::Application::textStruct::createAssets(dx::HwndRT * pRT, dw::Factory 
 		DWRITE_FONT_WEIGHT_NORMAL,
 		DWRITE_FONT_STYLE_NORMAL,
 		DWRITE_FONT_STRETCH_NORMAL,
-		16,
+		16.f,
 		L"",
 		&this->consolas16
 	);
 	if (FAILED(hr)) [[unlikely]]
 		return false;
 
-	hr = pRT->CreateSolidColorBrush(
-		D2D1::ColorF(63.f / 255.f, 127.f / 255.f, 127.f / 255.f),
-		&this->pTextBrush
+	hr = pWF->CreateTextFormat(
+		L"Consolas",
+		nullptr,
+		DWRITE_FONT_WEIGHT_BOLD,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		24.f,
+		L"",
+		&this->consolas24CenteredBold
 	);
 	if (FAILED(hr)) [[unlikely]]
 		return false;
+
+	// Set alignment
+	hr = this->consolas24CenteredBold->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
+	hr = pRT->CreateSolidColorBrush(
+		D2D1::ColorF(255.f / 255.f, 242.f / 255.f, 0.f / 255.f),
+		&this->pScoreBrush
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+	hr = pRT->CreateSolidColorBrush(
+		D2D1::ColorF(0.f / 255.f, 196.f / 255.f, 117.f / 255.f),
+		&this->pWinBrush
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+	hr = pRT->CreateSolidColorBrush(
+		D2D1::ColorF(241.f / 255.f, 75.f / 255.f, 84.f / 255.f),
+		&this->pLoseBrush
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
 
 	return true;
 }
 void snake::Application::textStruct::destroyAssets() noexcept
 {
-	snake::safeRelease(this->pTextBrush);
+	snake::safeRelease(this->pScoreBrush);
+	snake::safeRelease(this->pWinBrush);
+	snake::safeRelease(this->pLoseBrush);
+
 	snake::safeRelease(this->consolas16);
+	snake::safeRelease(this->consolas24CenteredBold);
 }
 
 void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept
 {
-	// Draw score
-	std::wstring txt{ L"Score: " };
-	txt += std::to_wstring(scoring.score);
+	switch (this->m_refMode)
+	{
+	case Logic::snakeInfo::modes::normal:
+	{
+		// Draw score
+		std::wstring txt{ L"Score: " };
+		txt += std::to_wstring(scoring.score);
 
-	auto ltop{ Application::s_calcToTile(tileSz, 50, 1) };
-	auto rbottom{ Application::s_calcToTile(tileSz, 62, 2) };
+		auto ltop{ Application::s_calcToTile(tileSz, 50, 1) };
+		auto rbottom{ Application::s_calcToTile(tileSz, 62, 2) };
 
-	pRT->DrawTextW(
-		txt.c_str(),
-		dx::U32(txt.size()),
-		this->consolas16,
-		dx::RectF{ ltop.width, ltop.height, rbottom.width, rbottom.height },
-		this->pTextBrush
-	);
+		pRT->DrawTextW(
+			txt.c_str(),
+			dx::U32(txt.size()),
+			this->consolas16,
+			dx::RectF{ ltop.width, ltop.height, rbottom.width, rbottom.height },
+			this->pScoreBrush
+		);
+		break;
+	}
+	case Logic::snakeInfo::modes::win:
+	{
+		constexpr std::wstring_view win{ L"You won!" }, scoreLabel{ L"Your score was:" };
+
+		constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
+
+		auto ltop{ Application::s_calcToTile(tileSz, posx0, posy0) };
+		auto rbottom{ Application::s_calcToTile(tileSz, posx1, posy1) };
+
+		pRT->DrawTextW(
+			win.data(),
+			dx::U32(win.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pWinBrush
+		);
+
+		ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 2);
+		rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 2);
+
+		pRT->DrawTextW(
+			scoreLabel.data(),
+			dx::U32(scoreLabel.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pWinBrush
+		);
+
+		ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 4);
+		rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 4);
+
+
+		// Show score
+		std::wstring scoreStr{ std::to_wstring(scoring.score) };
+		pRT->DrawTextW(
+			scoreStr.c_str(),
+			dx::U32(scoreStr.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pWinBrush
+		);
+
+		// Show instructions
+		constexpr std::wstring_view retStr{ L"Press 'ENTER' to start again." };
+		
+		ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 16);
+		rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 16);
+
+		pRT->DrawTextW(
+			retStr.data(),
+			dx::U32(retStr.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pWinBrush
+		);
+		break;
+	}
+	case Logic::snakeInfo::modes::game_over:
+	{
+		constexpr std::wstring_view gameOver{ L"Game over!" }, scoreLabel{ L"Your score was:" };
+
+		constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
+
+		auto ltop{ Application::s_calcToTile(tileSz, posx0, posy0) };
+		auto rbottom{ Application::s_calcToTile(tileSz, posx1, posy1) };
+
+		pRT->DrawTextW(
+			gameOver.data(),
+			dx::U32(gameOver.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pLoseBrush
+		);
+
+		ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 2);
+		rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 2);
+
+		pRT->DrawTextW(
+			scoreLabel.data(),
+			dx::U32(scoreLabel.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pLoseBrush
+		);
+
+		ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 4);
+		rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 4);
+
+
+		// Show score
+		std::wstring scoreStr{ std::to_wstring(scoring.score) };
+		pRT->DrawTextW(
+			scoreStr.c_str(),
+			dx::U32(scoreStr.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pLoseBrush
+		);
+
+		// Show instructions
+		constexpr std::wstring_view retStr{ L"Press 'ENTER' to start again." };
+		
+		ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 16);
+		rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 16);
+
+		pRT->DrawTextW(
+			retStr.data(),
+			dx::U32(retStr.size()),
+			this->consolas24CenteredBold,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pLoseBrush
+		);
+		break;
+	}
+	}
 }
 
 void snake::Application::p_calcDpiSpecific() noexcept
@@ -787,6 +943,10 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 	Logic::direction dir{};
 	switch (wp)
 	{
+	// Exit program
+	case VK_ESCAPE:
+		::DestroyWindow(this->m_hwnd);
+		break;
 	case VK_LEFT:
 		dir = Logic::direction::left;
 		break;
@@ -798,6 +958,10 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 		break;
 	case VK_DOWN:
 		dir = Logic::direction::down;
+		break;
+	case VK_RETURN:
+		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::snakeInfo::modes::normal)
+			this->restartGame();
 		break;
 	default:
 		return 0;
