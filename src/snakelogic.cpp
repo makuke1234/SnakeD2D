@@ -16,6 +16,14 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			auto st = std::clock();
 			::Sleep(20);
 			inf->scoring.time -= float(std::clock() - st) / CLOCKS_PER_SEC;
+
+			// Check if game has been paused, if so, then wait for the game to un-pause
+			while (inf->scoring.paused)
+			{
+				::Sleep(20);
+				if (inf->endSignal)
+					goto sp_snakeLoopThreadFinish;
+			}
 		}
 		inf->scoring.time = inf->scoring.curTime;
 

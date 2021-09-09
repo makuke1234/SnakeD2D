@@ -72,19 +72,14 @@ namespace snake
 		struct textStruct
 		{
 			dw::TxtFormat * consolas16{ nullptr }, * consolas24CenteredBold{ nullptr };
-			dx::SolidBrush * pScoreBrush{ nullptr }, * pWinBrush{ nullptr }, * pLoseBrush{ nullptr };
-
-			Logic::snakeInfo::modes& m_refMode;
-
-			constexpr textStruct(Logic::snakeInfo::modes& refMode) noexcept
-				: m_refMode(refMode)
-			{}
+			dx::SolidBrush * pScoreBrush{ nullptr }, * pWinBrush{ nullptr },
+				* pLoseBrush{ nullptr }, * pPauseBrush{ nullptr };
 
 			bool createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept;
 			void destroyAssets() noexcept;
 
 			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept;
-		} m_text{ m_snakeLogic.m_sInfo.scoring.mode };
+		} m_text;
 
 		dx::F m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		dx::SzU m_border{};

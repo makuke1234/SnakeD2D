@@ -216,6 +216,13 @@ bool snake::Application::textStruct::createAssets(dx::HwndRT * pRT, dw::Factory 
 	if (FAILED(hr)) [[unlikely]]
 		return false;
 
+	hr = pRT->CreateSolidColorBrush(
+		D2D1::ColorF(153.f / 255.f, 217.f / 255.f, 234.f / 255.f),
+		&this->pPauseBrush
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
 
 	return true;
 }
@@ -224,6 +231,7 @@ void snake::Application::textStruct::destroyAssets() noexcept
 	snake::safeRelease(this->pScoreBrush);
 	snake::safeRelease(this->pWinBrush);
 	snake::safeRelease(this->pLoseBrush);
+	snake::safeRelease(this->pPauseBrush);
 
 	snake::safeRelease(this->consolas16);
 	snake::safeRelease(this->consolas24CenteredBold);
@@ -231,7 +239,9 @@ void snake::Application::textStruct::destroyAssets() noexcept
 
 void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept
 {
-	switch (this->m_refMode)
+	constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
+
+	switch (scoring.mode)
 	{
 	case Logic::snakeInfo::modes::normal:
 	{
@@ -246,16 +256,41 @@ void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT
 			txt.c_str(),
 			dx::U32(txt.size()),
 			this->consolas16,
-			dx::RectF{ ltop.width, ltop.height, rbottom.width, rbottom.height },
+			snake::combine<dx::RectF>(ltop, rbottom),
 			this->pScoreBrush
 		);
+
+		// If game has been paused
+		if (scoring.paused)
+		{
+			constexpr std::wstring_view pauseStr1{ L"The game has been paused." }, pauseStr2{ L"Press 'ESCAPE' to resume." };
+			auto ltop{ Application::s_calcToTile(tileSz, posx0, posy0) };
+			auto rbottom{ Application::s_calcToTile(tileSz, posx1, posy1) };
+
+			pRT->DrawTextW(
+				pauseStr1.data(),
+				dx::U32(pauseStr1.size()),
+				this->consolas24CenteredBold,
+				snake::combine<dx::RectF>(ltop, rbottom),
+				this->pPauseBrush
+			);
+
+			ltop = Application::s_calcToTile(tileSz, posx0, posy0 + 16);
+			rbottom = Application::s_calcToTile(tileSz, posx1, posy1 + 16);
+
+			pRT->DrawTextW(
+				pauseStr2.data(),
+				dx::U32(pauseStr2.size()),
+				this->consolas24CenteredBold,
+				snake::combine<dx::RectF>(ltop, rbottom),
+				this->pPauseBrush
+			);
+		}
 		break;
 	}
 	case Logic::snakeInfo::modes::win:
 	{
 		constexpr std::wstring_view win{ L"You won!" }, scoreLabel{ L"Your score was:" };
-
-		constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
 
 		auto ltop{ Application::s_calcToTile(tileSz, posx0, posy0) };
 		auto rbottom{ Application::s_calcToTile(tileSz, posx1, posy1) };
@@ -311,8 +346,6 @@ void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT
 	case Logic::snakeInfo::modes::game_over:
 	{
 		constexpr std::wstring_view gameOver{ L"Game over!" }, scoreLabel{ L"Your score was:" };
-
-		constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
 
 		auto ltop{ Application::s_calcToTile(tileSz, posx0, posy0) };
 		auto rbottom{ Application::s_calcToTile(tileSz, posx1, posy1) };
@@ -943,9 +976,14 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 	Logic::direction dir{};
 	switch (wp)
 	{
-	// Exit program
+	// Toggle game pause state
 	case VK_ESCAPE:
-		::DestroyWindow(this->m_hwnd);
+		if (this->m_snakeLogic.m_sInfo.scoring.mode == Logic::snakeInfo::modes::normal)
+		{
+			this->m_snakeLogic.m_sInfo.scoring.paused ^= 1;
+			// Update screen
+			::InvalidateRect(this->m_hwnd, nullptr, FALSE);
+		}
 		break;
 	case VK_LEFT:
 		dir = Logic::direction::left;
@@ -960,8 +998,11 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 		dir = Logic::direction::down;
 		break;
 	case VK_RETURN:
-		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::snakeInfo::modes::normal)
+		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::snakeInfo::modes::normal || this->m_snakeLogic.m_sInfo.scoring.paused)
+		{
 			this->restartGame();
+			return 0;
+		}
 		break;
 	default:
 		return 0;

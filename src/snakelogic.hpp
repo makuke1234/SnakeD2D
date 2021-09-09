@@ -40,6 +40,7 @@ namespace snake
 				std::uint32_t score{ 0 };
 				static constexpr std::uint32_t winningScore{ 45 * 20 };
 				modes mode{ modes::normal };
+				bool paused{ false };
 				direction snakeDir{ direction::left };
 			} scoring{};
 		} m_sInfo{ *this };
