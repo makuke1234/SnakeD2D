@@ -6,6 +6,7 @@
 
 #include <deque>
 #include <array>
+#include <random>
 
 namespace snake
 {
@@ -30,6 +31,7 @@ namespace snake
 			L"Error creating DirectWrite assets (fonts)!"
 		};
 
+		std::mt19937 m_rng;
 		HINSTANCE m_hInst{ nullptr };
 		LPCWSTR m_lpCmdArgs;
 		HWND m_hwnd{ nullptr };
@@ -65,6 +67,7 @@ namespace snake
 				* snakeHeadTile{ nullptr };
 			std::array<dx::BmpBrush *, s_numFoodTiles> snakeFoodTiles;
 			
+			dx::BmpBrush * randomFoodTile(std::mt19937 & rng) const noexcept;
 			bool createAssets(dx::HwndRT * pRT, bmpsStruct const & bmps) noexcept;
 			void destroyAssets() noexcept;
 		} m_bmpBrushes;
@@ -232,13 +235,14 @@ namespace snake
 			return this->s_calcFromTile(this->m_tileSzF, x, y);
 		}
 
+		Tile makeRandomSnakeTile() noexcept;
 		Tile makeSnakeTile(long cx, long cy) const noexcept;
 		void makeSnakeTile(Tile & t, long cx, long cy) const noexcept;
 		void moveTile(Tile & t, long cx, long cy) const noexcept;
 
 		void initSnakeData();
 
-		void genFood(snake::Tile & output) const noexcept;
+		void genFood(snake::Tile & output) noexcept;
 
 		void restartGame();
 

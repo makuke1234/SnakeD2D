@@ -134,6 +134,11 @@ void snake::Application::bmpsStruct::destroyAssets() noexcept
 	}
 }
 
+dx::BmpBrush * snake::Application::bmpBrushesStruct::randomFoodTile(std::mt19937 & rng) const noexcept
+{
+	static std::uniform_int_distribution<std::size_t> distrib(0, Application::s_numFoodTiles - 1);
+	return this->snakeFoodTiles[distrib(rng)];
+}
 bool snake::Application::bmpBrushesStruct::createAssets(
 	dx::HwndRT * pRT,
 	Application::bmpsStruct const & bmps
@@ -263,7 +268,8 @@ void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT
 		// If game has been paused
 		if (scoring.paused)
 		{
-			constexpr std::wstring_view pauseStr1{ L"The game has been paused." }, pauseStr2{ L"Press 'ESCAPE' to resume." };
+			constexpr std::wstring_view pauseStr1{ L"The game has been paused." },
+				pauseStr2{ L"Press 'ESCAPE' to resume or 'ENTER' to restart." };
 			auto ltop{ Application::s_calcToTile(tileSz, posx0, posy0) };
 			auto rbottom{ Application::s_calcToTile(tileSz, posx1, posy1) };
 
@@ -493,11 +499,8 @@ bool snake::Application::p_loadD2D1BitmapFromResource(
 }
 
 snake::Application::Application(LPCWSTR lpCmdArgs) noexcept
-	: m_lpCmdArgs(lpCmdArgs)
-{
-	// Initialise random number generator
-	std::srand(unsigned(time(nullptr)));
-}
+	: m_rng(std::random_device()()), m_lpCmdArgs(lpCmdArgs)
+{}
 snake::Application::~Application() noexcept
 {
 	this->destroyAssets();
@@ -905,7 +908,7 @@ bool snake::Application::createAssets() noexcept
 		i.createAssets(this->m_bmpBrushes.snakeBodyTile);
 	}
 	this->m_tiles.snakeHeadTile.createAssets(this->m_bmpBrushes.snakeHeadTile);
-	this->m_tiles.snakeFoodTile.createAssets(this->m_bmpBrushes.snakeFoodTiles[std::rand() % this->s_numFoodTiles]);
+	this->m_tiles.snakeFoodTile.createAssets(this->m_bmpBrushes.randomFoodTile(this->m_rng));
 	
 	// Create fonts
 	if (!this->m_text.createAssets(this->m_pRT, this->m_pDWriteFactory)) [[unlikely]]
@@ -983,6 +986,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 			this->m_snakeLogic.m_sInfo.scoring.paused ^= 1;
 			// Update screen
 			::InvalidateRect(this->m_hwnd, nullptr, FALSE);
+			return 0;
 		}
 		break;
 	case VK_LEFT:
@@ -1023,6 +1027,15 @@ LRESULT snake::Application::onKeyRelease(WPARAM wp, LPARAM lp) noexcept
 	return ::DefWindowProcW(this->m_hwnd, WM_KEYUP, wp, lp);
 }
 
+snake::Tile snake::Application::makeRandomSnakeTile() noexcept
+{
+	static std::uniform_int_distribution<long> wDist(0, long(this->fieldWidth) - 1), hDist(0, long(this->fieldHeight) - 1);
+	return Tile(
+		this->m_tileSzF,
+		this->calcToTile(wDist(this->m_rng), hDist(this->m_rng)),
+		dx::SzU{ 1, 1 }
+	);
+}
 snake::Tile snake::Application::makeSnakeTile(long cx, long cy) const noexcept
 {
 	return Tile(
@@ -1062,7 +1075,7 @@ void snake::Application::initSnakeData()
 	this->genFood(this->m_tiles.snakeFoodTile);
 }
 
-void snake::Application::genFood(snake::Tile & output) const noexcept
+void snake::Application::genFood(snake::Tile & output) noexcept
 {
 	auto collides = [this](snake::Tile const& output) noexcept -> bool
 	{
@@ -1086,10 +1099,10 @@ void snake::Application::genFood(snake::Tile & output) const noexcept
 
 	do
 	{
-		output = this->makeSnakeTile(std::rand() % long(this->fieldWidth), std::rand() % long(this->fieldHeight));
+		output = this->makeRandomSnakeTile();
 	} while (collides(output));
 	output.destroyAssets();
-	output.createAssets(this->m_bmpBrushes.snakeFoodTiles[std::rand() % this->s_numFoodTiles]);
+	output.createAssets(this->m_bmpBrushes.randomFoodTile(this->m_rng));
 }
 
 void snake::Application::restartGame()
