@@ -14,9 +14,9 @@ snake::Tile::~Tile() noexcept
 	this->destroyAssets();
 }
 
-[[nodiscard]] dx::BmpBrush * snake::Tile::createBmpBrush(dx::HwndRT * pRT, dx::Bmp * pBm) noexcept
+[[nodiscard]] dx::BmBrush * snake::Tile::createBmpBrush(dx::HwndRT * pRT, dx::Bmp * pBm) noexcept
 {
-	dx::BmpBrush * bmBrush{ nullptr };
+	dx::BmBrush * bmBrush{ nullptr };
 	auto hr = pRT->CreateBitmapBrush(
 		pBm,
 		&bmBrush
@@ -30,7 +30,7 @@ snake::Tile::~Tile() noexcept
 
 	return bmBrush;
 }
-void snake::Tile::createAssets(dx::BmpBrush * pBmBrush) noexcept
+void snake::Tile::createAssets(dx::BmBrush * pBmBrush) noexcept
 {
 	if (this->m_pBmBrush != nullptr)
 		return;

@@ -16,14 +16,14 @@ namespace snake
 			right,
 			down
 		};
-		static constexpr auto direction_enum_size{ std::underlying_type_t<direction>(4) };
+		static constexpr auto s_direction_enum_size{ std::underlying_type_t<direction>(4) };
 
 	private:
 		friend class snake::Application;
 
 		snake::Application & m_appref;
 
-		struct snakeInfo
+		struct SnakeInfo
 		{
 			Logic & This;
 			enum class modes : std::uint8_t
@@ -34,7 +34,7 @@ namespace snake
 			};
 			HANDLE hThread{ nullptr };
 			bool endSignal{ false };
-			struct scoringStruct
+			struct Scoring
 			{
 				float time{ 0.f }, curTime{ .25f };
 				std::uint32_t score{ 0 };

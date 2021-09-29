@@ -26,7 +26,7 @@ namespace dx
 	using HwndRT = ID2D1HwndRenderTarget;
 	using SolidBrush = ID2D1SolidColorBrush;
 	using Bmp = ID2D1Bitmap;
-	using BmpBrush = ID2D1BitmapBrush;
+	using BmBrush = ID2D1BitmapBrush;
 
 	using F = FLOAT;
 	using U32 = UINT32;

@@ -11,7 +11,7 @@ namespace snake
 
 		dx::RectF m_tilesRect{};
 
-		dx::BmpBrush * m_pBmBrush{ nullptr };
+		dx::BmBrush * m_pBmBrush{ nullptr };
 
 	public:
 		Tile() noexcept = default;
@@ -41,8 +41,8 @@ namespace snake
 		}
 		~Tile() noexcept;
 
-		[[nodiscard]] static dx::BmpBrush * createBmpBrush(dx::HwndRT * pRT, dx::Bmp * pBm) noexcept;
-		void createAssets(dx::BmpBrush * pBmBrush) noexcept;
+		[[nodiscard]] static dx::BmBrush * createBmpBrush(dx::HwndRT * pRT, dx::Bmp * pBm) noexcept;
+		void createAssets(dx::BmBrush * pBmBrush) noexcept;
 		void destroyAssets() noexcept;
 
 		void onRender(dx::HwndRT * pRT) const noexcept;

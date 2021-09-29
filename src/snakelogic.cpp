@@ -7,7 +7,7 @@
 
 DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 {
-	auto inf = static_cast<snakeInfo *>(lp);
+	auto inf = static_cast<SnakeInfo *>(lp);
 
 	while (!inf->endSignal)
 	{
@@ -29,7 +29,7 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 		switch (inf->scoring.mode)
 		{
-		case snakeInfo::modes::normal:
+		case SnakeInfo::modes::normal:
 		{
 			// Check for "bad" collisions
 			bool collides{ false };
@@ -56,7 +56,7 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 
 			if (collides)
 			{
-				inf->scoring.mode = snakeInfo::modes::game_over;
+				inf->scoring.mode = SnakeInfo::modes::game_over;
 				inf->scoring.time = 0.f;
 				break;
 			}
@@ -88,12 +88,12 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			// After checking "good" collisions, check score
 			if (inf->scoring.score >= inf->scoring.winningScore)
 			{
-				inf->scoring.mode = snakeInfo::modes::win;
+				inf->scoring.mode = SnakeInfo::modes::win;
 				inf->scoring.time = 0.f;
 			}
 			break;
 		}
-		case snakeInfo::modes::game_over:
+		case SnakeInfo::modes::game_over:
 			// Play game over sound
 			inf->This.m_appref.playSnd(IDW_SOUND_GAME_OVER);
 
@@ -103,7 +103,7 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
-			while (inf->scoring.mode == snakeInfo::modes::game_over)
+			while (inf->scoring.mode == SnakeInfo::modes::game_over)
 			{
 				::Sleep(50);
 				if (inf->endSignal)
@@ -111,7 +111,7 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			}
 
 			break;
-		case snakeInfo::modes::win:
+		case SnakeInfo::modes::win:
 			// Play winning sound
 			inf->This.m_appref.playSnd(IDW_SOUND_WIN);
 
@@ -121,7 +121,7 @@ DWORD WINAPI snake::Logic::sp_snakeLoopThread(LPVOID lp) noexcept
 			::InvalidateRect(inf->This.m_appref.m_hwnd, nullptr, FALSE);
 
 			// Wait for mode change
-			while (inf->scoring.mode == snakeInfo::modes::win)
+			while (inf->scoring.mode == SnakeInfo::modes::win)
 			{
 				::Sleep(50);
 				if (inf->endSignal)
@@ -175,8 +175,8 @@ void snake::Logic::moveSnake() const noexcept
 		break;
 	}
 
-	constexpr auto ipWidth{ std::intptr_t(this->m_appref.fieldWidth) },
-		ipHeight{ std::intptr_t(this->m_appref.fieldHeight) };
+	constexpr auto ipWidth{ std::intptr_t(this->m_appref.s_fieldWidth) },
+		ipHeight{ std::intptr_t(this->m_appref.s_fieldHeight) };
 	// Make sure that position stays in bounds
 	if (posx < 0)
 		posx += ipWidth;
@@ -240,5 +240,5 @@ void snake::Logic::stepNow() noexcept
 
 void snake::Logic::resetScoring() noexcept
 {
-	this->m_sInfo.scoring = snakeInfo::scoringStruct();
+	this->m_sInfo.scoring = SnakeInfo::Scoring();
 }

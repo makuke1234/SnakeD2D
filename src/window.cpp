@@ -6,7 +6,7 @@
 #include <ctime>
 #include <memory>
 
-LRESULT CALLBACK snake::Application::winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
+LRESULT CALLBACK snake::Application::sp_winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept
 {
 	static snake::Application * This{};
 
@@ -113,7 +113,7 @@ LRESULT CALLBACK snake::Application::winProc(HWND hwnd, UINT uMsg, WPARAM wp, LP
 	return 0;
 }
 
-void snake::Application::tilesStruct::destroyAssets() noexcept
+void snake::Application::TilesStruct::destroyAssets() noexcept
 {
 	for (auto & i : this->obstacleTiles)
 		i.destroyAssets();
@@ -123,7 +123,7 @@ void snake::Application::tilesStruct::destroyAssets() noexcept
 	this->snakeFoodTile.destroyAssets();
 }
 
-void snake::Application::bmpsStruct::destroyAssets() noexcept
+void snake::Application::BmpStruct::destroyAssets() noexcept
 {
 	snake::safeRelease(this->obstacleTile);
 	snake::safeRelease(this->snakeBodyTile);
@@ -134,14 +134,14 @@ void snake::Application::bmpsStruct::destroyAssets() noexcept
 	}
 }
 
-dx::BmpBrush * snake::Application::bmpBrushesStruct::randomFoodTile(std::mt19937 & rng) const noexcept
+dx::BmBrush * snake::Application::BmpBrushesStruct::randomFoodTile(std::mt19937 & rng) const noexcept
 {
 	static std::uniform_int_distribution<std::size_t> distrib(0, Application::s_numFoodTiles - 1);
 	return this->snakeFoodTiles[distrib(rng)];
 }
-bool snake::Application::bmpBrushesStruct::createAssets(
+bool snake::Application::BmpBrushesStruct::createAssets(
 	dx::HwndRT * pRT,
-	Application::bmpsStruct const & bmps
+	Application::BmpStruct const & bmps
 ) noexcept
 {
 	if ((this->obstacleTile = Tile::createBmpBrush(pRT, bmps.obstacleTile)) == nullptr) [[unlikely]]
@@ -158,7 +158,7 @@ bool snake::Application::bmpBrushesStruct::createAssets(
 
 	return true;
 }
-void snake::Application::bmpBrushesStruct::destroyAssets() noexcept
+void snake::Application::BmpBrushesStruct::destroyAssets() noexcept
 {
 	snake::safeRelease(this->obstacleTile);
 	snake::safeRelease(this->snakeBodyTile);
@@ -169,7 +169,7 @@ void snake::Application::bmpBrushesStruct::destroyAssets() noexcept
 	}
 }
 
-bool snake::Application::textStruct::createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept
+bool snake::Application::TextStruct::createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept
 {
 	auto hr = pWF->CreateTextFormat(
 		L"Consolas",
@@ -231,7 +231,7 @@ bool snake::Application::textStruct::createAssets(dx::HwndRT * pRT, dw::Factory 
 
 	return true;
 }
-void snake::Application::textStruct::destroyAssets() noexcept
+void snake::Application::TextStruct::destroyAssets() noexcept
 {
 	snake::safeRelease(this->pScoreBrush);
 	snake::safeRelease(this->pWinBrush);
@@ -242,13 +242,13 @@ void snake::Application::textStruct::destroyAssets() noexcept
 	snake::safeRelease(this->consolas24CenteredBold);
 }
 
-void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept
+void snake::Application::TextStruct::onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::SnakeInfo::Scoring const & scoring) const noexcept
 {
-	constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
+	constexpr long posx0{ 20 }, posy0{ 8 }, posx1{ long(s_fieldWidth) - posx0 - 1 }, posy1{ posy0 + 1 };
 
 	switch (scoring.mode)
 	{
-	case Logic::snakeInfo::modes::normal:
+	case Logic::SnakeInfo::modes::normal:
 	{
 		// Draw score
 		std::wstring txt{ L"Score: " };
@@ -294,7 +294,7 @@ void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT
 		}
 		break;
 	}
-	case Logic::snakeInfo::modes::win:
+	case Logic::SnakeInfo::modes::win:
 	{
 		constexpr std::wstring_view win{ L"You won!" }, scoreLabel{ L"Your score was:" };
 
@@ -349,7 +349,7 @@ void snake::Application::textStruct::onRender(dx::SzF const & tileSz, dx::HwndRT
 		);
 		break;
 	}
-	case Logic::snakeInfo::modes::game_over:
+	case Logic::SnakeInfo::modes::game_over:
 	{
 		constexpr std::wstring_view gameOver{ L"Game over!" }, scoreLabel{ L"Your score was:" };
 
@@ -417,14 +417,14 @@ void snake::Application::p_calcDpiSpecific() noexcept
 		.height = dx::U32(windowR.bottom - windowR.top)  - (clientR.bottom - clientR.top)
 	};
 
-	this->m_minSize.x = LONG(std::ceil(this->fromDipxi<float>(tileSz, this->fieldWidth)  + float(this->m_border.width)));
-	this->m_minSize.y = LONG(std::ceil(this->fromDipyi<float>(tileSz, this->fieldHeight) + float(this->m_border.height)));
+	this->m_minSize.x = LONG(std::ceil(this->fromDipxi<float>(s_tileSz, this->s_fieldWidth)  + float(this->m_border.width)));
+	this->m_minSize.y = LONG(std::ceil(this->fromDipyi<float>(s_tileSz, this->s_fieldHeight) + float(this->m_border.height)));
 
-	auto [rX, rY] = this->fromDipxy<dx::SzF>(tileSz, tileSz);
+	auto [rX, rY] = this->fromDipxy<dx::SzF>(s_tileSz, s_tileSz);
 	float dX = rX - float(dx::U32(rX)), dY = rY - float(dx::U32(rY));
 	this->m_tileSzF = dx::SzF{
-		.width  = tileSz - this->toDipx(dX),
-		.height = tileSz - this->toDipy(dY)
+		.width  = s_tileSz - this->toDipx(dX),
+		.height = s_tileSz - this->toDipy(dY)
 	};
 }
 bool snake::Application::p_loadD2D1BitmapFromResource(
@@ -539,11 +539,11 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 
 	w.cbSize        = sizeof w;
 	w.style         = CS_HREDRAW | CS_VREDRAW;
-	w.lpfnWndProc   = &this->winProc;
+	w.lpfnWndProc   = &this->sp_winProc;
 	w.hInstance     = hInst;
 	w.hCursor       = ::LoadCursorW(nullptr, IDC_ARROW);
 	w.hIconSm       = w.hIcon = ::LoadIconW(hInst, IDI_APPLICATION);
-	w.lpszClassName = this->className.data();
+	w.lpszClassName = this->s_className.data();
 	
 	if (!::RegisterClassExW(&w)) [[unlikely]]
 	{
@@ -557,8 +557,8 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 	// Create window
 	this->m_hwnd = ::CreateWindowExW(
 		0,
-		this->className.data(),
-		this->applicationName.data(),
+		this->s_className.data(),
+		this->s_applicationName.data(),
 		WS_OVERLAPPEDWINDOW ^ (WS_SIZEBOX | WS_MAXIMIZEBOX),
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -601,24 +601,24 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 	// Upper right
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		dx::SzF{ this->m_tileSzF.width * (this->fieldWidth - 6.f), 0.f },
+		dx::SzF{ this->m_tileSzF.width * (this->s_fieldWidth - 6.f), 0.f },
 		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		dx::SzF{ this->m_tileSzF.width * (this->fieldWidth - 1.f), this->m_tileSzF.height },
+		dx::SzF{ this->m_tileSzF.width * (this->s_fieldWidth - 1.f), this->m_tileSzF.height },
 		dx::SzU{ 1, 5 }
 	);
 
 	// Bottom left
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		dx::SzF{ 0.f, this->m_tileSzF.height * (this->fieldHeight - 1.f) },
+		dx::SzF{ 0.f, this->m_tileSzF.height * (this->s_fieldHeight - 1.f) },
 		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
-		dx::SzF{ 0.f, this->m_tileSzF.height * (this->fieldHeight - 6.f) },
+		dx::SzF{ 0.f, this->m_tileSzF.height * (this->s_fieldHeight - 6.f) },
 		dx::SzU{ 1, 5 }
 	);
 
@@ -626,16 +626,16 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		dx::SzF{
-			this->m_tileSzF.width  * (this->fieldWidth  - 6.f),
-			this->m_tileSzF.height * (this->fieldHeight - 1.f)
+			this->m_tileSzF.width  * (this->s_fieldWidth  - 6.f),
+			this->m_tileSzF.height * (this->s_fieldHeight - 1.f)
 		},
 		dx::SzU{ 6, 1 }
 	);
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		dx::SzF{
-			this->m_tileSzF.width  * (this->fieldWidth  - 1.f),
-			this->m_tileSzF.height * (this->fieldHeight - 6.f)
+			this->m_tileSzF.width  * (this->s_fieldWidth  - 1.f),
+			this->m_tileSzF.height * (this->s_fieldHeight - 6.f)
 		},
 		dx::SzU{ 1, 5 }
 	);
@@ -644,8 +644,8 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 	this->m_tiles.obstacleTiles.emplace_back(
 		this->m_tileSzF,
 		dx::SzF{
-			this->m_tileSzF.width  * float(long(this->fieldWidth  - 8.f) / 2),
-			this->m_tileSzF.height * float(long(this->fieldHeight - 6.f) / 2)
+			this->m_tileSzF.width  * float(long(this->s_fieldWidth  - 8.f) / 2),
+			this->m_tileSzF.height * float(long(this->s_fieldHeight - 6.f) / 2)
 		},
 		dx::SzU{ 8, 6 }
 	);
@@ -693,19 +693,19 @@ void snake::Application::s_error(errid id) noexcept
 	using eT = std::underlying_type_t<errid>;
 	
 	auto oid = eT(id);
-	if (oid >= eT(errid::errid_enum_size)) [[unlikely]]
+	if (oid >= eT(errid::enum_size)) [[unlikely]]
 		oid = eT(errid::Unknown);
 
 	::MessageBoxW(
 		nullptr,
-		snake::Application::s_errorIds[oid], 
-		Application::applicationName.data(),
+		snake::Application::sc_errorIds[oid], 
+		Application::s_applicationName.data(),
 		MB_ICONERROR | MB_OK
 	);
 }
 void snake::Application::s_error(const wchar_t * str) noexcept
 {
-	::MessageBoxW(nullptr, str, Application::applicationName.data(), MB_ICONERROR | MB_OK);
+	::MessageBoxW(nullptr, str, Application::s_applicationName.data(), MB_ICONERROR | MB_OK);
 }
 
 void snake::Application::error(errid id) const noexcept
@@ -713,13 +713,13 @@ void snake::Application::error(errid id) const noexcept
 	using eT = std::underlying_type_t<errid>;
 
 	auto oid = eT(id);
-	if (oid >= eT(errid::errid_enum_size)) [[unlikely]]
+	if (oid >= eT(errid::enum_size)) [[unlikely]]
 		oid = eT(errid::Unknown);
 	
 	::MessageBoxW(
 		this->m_hwnd,
-		this->s_errorIds[oid],
-		this->applicationName.data(),
+		this->sc_errorIds[oid],
+		this->s_applicationName.data(),
 		MB_ICONERROR | MB_OK
 	);
 }
@@ -728,7 +728,7 @@ void snake::Application::error(const wchar_t * str) const noexcept
 	::MessageBoxW(
 		this->m_hwnd,
 		str,
-		this->applicationName.data(),
+		this->s_applicationName.data(),
 		MB_ICONERROR | MB_OK
 	);
 }
@@ -757,7 +757,7 @@ bool snake::Application::createAssets() noexcept
 	
 	// Create bitmaps
 
-	auto [itWidth, itHeight] = this->fromDipxyi<dx::SzU>(tileSz, tileSz);
+	auto [itWidth, itHeight] = this->fromDipxyi<dx::SzU>(s_tileSz, s_tileSz);
 	auto borderW = (itWidth * 2) / 15;
 	auto borderH = (itHeight * 2) / 15;
 
@@ -981,7 +981,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 	{
 	// Toggle game pause state
 	case VK_ESCAPE:
-		if (this->m_snakeLogic.m_sInfo.scoring.mode == Logic::snakeInfo::modes::normal)
+		if (this->m_snakeLogic.m_sInfo.scoring.mode == Logic::SnakeInfo::modes::normal)
 		{
 			this->m_snakeLogic.m_sInfo.scoring.paused ^= 1;
 			// Update screen
@@ -1002,7 +1002,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 		dir = Logic::direction::down;
 		break;
 	case VK_RETURN:
-		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::snakeInfo::modes::normal || this->m_snakeLogic.m_sInfo.scoring.paused)
+		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::SnakeInfo::modes::normal || this->m_snakeLogic.m_sInfo.scoring.paused)
 		{
 			this->restartGame();
 			return 0;
@@ -1014,7 +1014,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 
 	// Check if the user wants to make a valid move
 	if (dir != this->m_snakeLogic.m_sInfo.scoring.snakeDir &&
-		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), Logic::direction_enum_size))
+		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), Logic::s_direction_enum_size))
 	{
 		this->m_snakeLogic.changeDirection(dir);
 		this->m_snakeLogic.stepNow();
@@ -1029,7 +1029,7 @@ LRESULT snake::Application::onKeyRelease(WPARAM wp, LPARAM lp) noexcept
 
 snake::Tile snake::Application::makeRandomSnakeTile() noexcept
 {
-	static std::uniform_int_distribution<long> wDist(0, long(this->fieldWidth) - 1), hDist(0, long(this->fieldHeight) - 1);
+	static std::uniform_int_distribution<long> wDist(0, long(this->s_fieldWidth) - 1), hDist(0, long(this->s_fieldHeight) - 1);
 	return Tile(
 		this->m_tileSzF,
 		this->calcToTile(wDist(this->m_rng), hDist(this->m_rng)),

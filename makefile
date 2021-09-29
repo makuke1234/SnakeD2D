@@ -1,7 +1,7 @@
 CXX=g++
 CDEFFLAGS=-std=c++20 -Wall -Wextra -Wpedantic -Wconversion
 CDEBFLAGS=-g -O0 -D _DEBUG
-CFLAGS=-O3 -Wl,--strip-all,--build-id=none,--gc-sections -fno-ident -mwindows -D NDEBUG -static
+CFLAGS=-O3 -Wl,--strip-all,--build-id=none,--gc-sections -fno-ident -mwindows -D NDEBUG -static -fno-rtti
 LIB=-municode -ld2d1 -luuid -ldwrite -lgdi32 -lwinmm
 
 SRC=src

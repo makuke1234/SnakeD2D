@@ -15,10 +15,10 @@ namespace snake
 	private:
 		friend class Logic;
 
-		static constexpr std::wstring_view applicationName{ L"SnakeD2D" },
-			className{ L"SnakeDirect2DClass" };
+		static constexpr std::wstring_view s_applicationName{ L"SnakeD2D" },
+			s_className{ L"SnakeDirect2DClass" };
 
-		static constexpr const wchar_t * s_errorIds[]
+		static constexpr const wchar_t * sc_errorIds[]
 		{
 			L"Unknown error occurred!",
 			L"Error creating Direct2D factory!",
@@ -39,7 +39,7 @@ namespace snake
 		dw::Factory * m_pDWriteFactory{ nullptr };
 		dx::HwndRT * m_pRT{ nullptr };
 
-		struct tilesStruct
+		struct TilesStruct
 		{
 			std::vector<Tile> obstacleTiles;
 			std::deque<Tile> snakeBodyTiles;
@@ -47,13 +47,13 @@ namespace snake
 
 			void destroyAssets() noexcept;
 		} m_tiles;
-		friend struct tilesStruct;
+		friend struct TilesStruct;
 		
 		static constexpr std::size_t s_numFoodTiles{ 9 };
 
 		snake::Logic m_snakeLogic{ *this };
 		
-		struct bmpsStruct
+		struct BmpStruct
 		{		
 			dx::Bmp * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
 				* snakeHeadTile{ nullptr };
@@ -61,18 +61,18 @@ namespace snake
 
 			void destroyAssets() noexcept;
 		} m_bmps;
-		struct bmpBrushesStruct
+		struct BmpBrushesStruct
 		{
-			dx::BmpBrush * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
+			dx::BmBrush * obstacleTile{ nullptr }, * snakeBodyTile{ nullptr },
 				* snakeHeadTile{ nullptr };
-			std::array<dx::BmpBrush *, s_numFoodTiles> snakeFoodTiles;
+			std::array<dx::BmBrush *, s_numFoodTiles> snakeFoodTiles;
 			
-			dx::BmpBrush * randomFoodTile(std::mt19937 & rng) const noexcept;
-			bool createAssets(dx::HwndRT * pRT, bmpsStruct const & bmps) noexcept;
+			dx::BmBrush * randomFoodTile(std::mt19937 & rng) const noexcept;
+			bool createAssets(dx::HwndRT * pRT, BmpStruct const & bmps) noexcept;
 			void destroyAssets() noexcept;
 		} m_bmpBrushes;
 
-		struct textStruct
+		struct TextStruct
 		{
 			dw::TxtFormat * consolas16{ nullptr }, * consolas24CenteredBold{ nullptr };
 			dx::SolidBrush * pScoreBrush{ nullptr }, * pWinBrush{ nullptr },
@@ -81,17 +81,17 @@ namespace snake
 			bool createAssets(dx::HwndRT * pRT, dw::Factory * pWF) noexcept;
 			void destroyAssets() noexcept;
 
-			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::snakeInfo::scoringStruct const & scoring) const noexcept;
+			void onRender(dx::SzF const & tileSz, dx::HwndRT * pRT, snake::Logic::SnakeInfo::Scoring const & scoring) const noexcept;
 		} m_text;
 
 		dx::F m_dpiX{ 96.f }, m_dpiY{ 96.f };
 		dx::SzU m_border{};
 		POINT m_minSize{ .x = 640, .y = 480 };
-		static constexpr dx::F tileSz{ 18.f }, fieldWidth{ 63.f }, fieldHeight{ 36.f };
-		dx::SzF m_tileSzF{ tileSz, tileSz };
+		static constexpr dx::F s_tileSz{ 18.f }, s_fieldWidth{ 63.f }, s_fieldHeight{ 36.f };
+		dx::SzF m_tileSzF{ s_tileSz, s_tileSz };
 
 
-		static LRESULT CALLBACK winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
+		static LRESULT CALLBACK sp_winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 
 		void p_calcDpiSpecific() noexcept;
 		bool p_loadD2D1BitmapFromResource(
@@ -171,7 +171,7 @@ namespace snake
 		int msgLoop() noexcept;
 
 
-		enum class errid : std::int_fast8_t
+		enum class errid : std::uint8_t
 		{
 			Unknown,
 			D2DFactory,
@@ -183,7 +183,7 @@ namespace snake
 			D2DAssetsBmBrushes,
 			DWAssetsFonts,
 
-			errid_enum_size
+			enum_size
 		};
 		static void s_error(errid id) noexcept;
 		static void s_error(const wchar_t * str) noexcept;
