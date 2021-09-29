@@ -187,6 +187,24 @@ bool snake::Application::TextStruct::createAssets(dx::HwndRT * pRT, dw::Factory 
 	hr = pWF->CreateTextFormat(
 		L"Consolas",
 		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		16.f,
+		L"",
+		&this->consolas16Centered
+	);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
+	// Set alignment
+	hr = this->consolas16Centered->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	if (FAILED(hr)) [[unlikely]]
+		return false;
+
+	hr = pWF->CreateTextFormat(
+		L"Consolas",
+		nullptr,
 		DWRITE_FONT_WEIGHT_BOLD,
 		DWRITE_FONT_STYLE_NORMAL,
 		DWRITE_FONT_STRETCH_NORMAL,
@@ -261,6 +279,45 @@ void snake::Application::TextStruct::onRender(dx::SzF const & tileSz, dx::HwndRT
 			txt.c_str(),
 			dx::U32(txt.size()),
 			this->consolas16,
+			snake::combine<dx::RectF>(ltop, rbottom),
+			this->pScoreBrush
+		);
+		
+		// Draw time
+		txt = L"Time: ";
+		{
+			int64_t lseconds = int64_t(scoring.totalTime);
+			int seconds = int(lseconds % 60ll);
+			int milliseconds = int(int64_t(1000.f * scoring.totalTime) - 1000ll * lseconds) / 10;
+			int hours = int(lseconds / 3600ll);
+			int minutes = int((lseconds - int64_t(hours) * 3600ll - int64_t(seconds)) / 60ll);
+
+			wchar_t digit[3] = { 0 };
+			digit[0] = L'0' + wchar_t(hours / 10);
+			digit[1] = L'0' + wchar_t(hours % 10);
+			txt += digit;
+			txt += L':';
+
+			digit[0] = L'0' + wchar_t(minutes / 10);
+			digit[1] = L'0' + wchar_t(minutes % 10);
+			txt += digit;
+			txt += L':';
+
+			digit[0] = L'0' + wchar_t(seconds / 10);
+			digit[1] = L'0' + wchar_t(seconds % 10);
+			txt += digit;
+			txt += L'.';
+
+			digit[0] = L'0' + wchar_t(milliseconds / 10);
+			digit[1] = L'0' + wchar_t(milliseconds % 10);
+			txt += digit;
+		}
+		ltop    = Application::s_calcToTile(tileSz, 0, Application::s_fieldHeight - 1);
+		rbottom = Application::s_calcToTile(tileSz, Application::s_fieldWidth, Application::s_fieldHeight);
+		pRT->DrawTextW(
+			txt.c_str(),
+			dx::U32(txt.size()),
+			this->consolas16Centered,
 			snake::combine<dx::RectF>(ltop, rbottom),
 			this->pScoreBrush
 		);

@@ -74,7 +74,8 @@ namespace snake
 
 		struct TextStruct
 		{
-			dw::TxtFormat * consolas16{ nullptr }, * consolas24CenteredBold{ nullptr };
+			dw::TxtFormat * consolas16{ nullptr }, * consolas16Centered{ nullptr },
+				* consolas24CenteredBold{ nullptr };
 			dx::SolidBrush * pScoreBrush{ nullptr }, * pWinBrush{ nullptr },
 				* pLoseBrush{ nullptr }, * pPauseBrush{ nullptr };
 
