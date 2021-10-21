@@ -1,5 +1,7 @@
 # SnakeD2D
+
 ![Release version](https://img.shields.io/badge/release-v1.0.0-green.svg)
+![C++ version](https://img.shields.io/badge/version-C++20-blue.svg)
 
 A snake fork written in C++ utilising Direct2D API.
 
