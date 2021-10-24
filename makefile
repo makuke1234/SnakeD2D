@@ -44,6 +44,13 @@ release_obj: $(objs_r)
 
 release: $(OBJ) release_obj
 
+
+debbulk: $(DOBJ) bulkcompile.cpp $(DOBJ)/resource.rc.o
+	$(CXX) bulkcompile.cpp $(DOBJ)/resource.rc.o -o deb$(TARGET).exe $(CDEFFLAGS) $(CDEBFLAGS) $(LIB)
+
+relbulk: $(OBJ) bulkcompile.cpp $(OBJ)/resource.rc.o
+	$(CXX) bulkcompile.cpp $(OBJ)/resource.rc.o -o $(TARGET).exe $(CDEFFLAGS) $(CFLAGS) $(LIB)
+
 clean:
 	del *.exe
 	IF EXIST $(OBJ) rd /s /q $(OBJ)

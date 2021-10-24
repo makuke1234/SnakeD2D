@@ -1,0 +1,5 @@
+#include "src/common.cpp"
+#include "src/main.cpp"
+#include "src/snakelogic.cpp"
+#include "src/tiles.cpp"
+#include "src/window.cpp"
