@@ -1,3 +1,4 @@
+SHELL=cmd
 CXX=g++
 CDEFFLAGS=-std=c++20 -Wall -Wextra -Wpedantic -Wconversion
 CDEBFLAGS=-g -O0 -D _DEBUG

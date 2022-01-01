@@ -1046,18 +1046,7 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 			return 0;
 		}
 		break;
-	case VK_LEFT:
-		dir = Logic::direction::left;
-		break;
-	case VK_RIGHT:
-		dir = Logic::direction::right;
-		break;
-	case VK_UP:
-		dir = Logic::direction::up;
-		break;
-	case VK_DOWN:
-		dir = Logic::direction::down;
-		break;
+	
 	case VK_RETURN:
 		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::SnakeInfo::modes::normal || this->m_snakeLogic.m_sInfo.scoring.paused)
 		{
@@ -1065,16 +1054,34 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 			return 0;
 		}
 		break;
-	default:
-		return 0;
 	}
 
-	// Check if the user wants to make a valid move
-	if (dir != this->m_snakeLogic.m_sInfo.scoring.snakeDir &&
-		enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), Logic::s_direction_enum_size))
+	if (!this->m_snakeLogic.m_sInfo.scoring.paused)
 	{
-		this->m_snakeLogic.changeDirection(dir);
-		this->m_snakeLogic.stepNow();
+		switch (wp)
+		{
+		case VK_LEFT:
+			dir = Logic::direction::left;
+			break;
+		case VK_RIGHT:
+			dir = Logic::direction::right;
+			break;
+		case VK_UP:
+			dir = Logic::direction::up;
+			break;
+		case VK_DOWN:
+			dir = Logic::direction::down;
+			break;
+		default:
+			return 0;
+		}
+		// Check if the user wants to make a valid move
+		if (dir != this->m_snakeLogic.m_sInfo.scoring.snakeDir &&
+			enumIsClose(enumDiff(dir, this->m_snakeLogic.m_sInfo.scoring.snakeDir), Logic::s_direction_enum_size))
+		{
+			this->m_snakeLogic.changeDirection(dir);
+			this->m_snakeLogic.stepNow();
+		}
 	}
 
 	return 0;
