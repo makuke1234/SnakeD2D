@@ -8,7 +8,7 @@ A snake fork written in C++ utilising Direct2D API.
 
 # Obtaining
 
-The Windows (7 and onwards) binaries can be downloaded [here](https://github.com/makuke1234/SnakeD2D/releases/tag/Stable).
+The Windows (7 and onwards) binaries can be downloaded [here](https://github.com/makuke1234/SnakeD2D/releases/tag/Release_1.0.1).
 
 
 # Controls
