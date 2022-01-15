@@ -13,13 +13,14 @@ The Windows (7 and onwards) binaries can be downloaded [here](https://github.com
 
 # Controls
 
-| Key    | Function      |
-|--------|---------------|
-| Left   | Move left     |
-| Up     | Move up       |
-| Right  | Move right    |
-| Down   | Move down     |
-| Escape | Pause/unpause |
+| Key    | Function          |
+|--------|-------------------|
+| Left   | Move left         |
+| Up     | Move up           |
+| Right  | Move right        |
+| Down   | Move down         |
+| Escape | Pause/unpause     |
+| F11    | Toggle fullscreen |
 
 
 # Changelog
