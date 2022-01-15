@@ -86,6 +86,12 @@ namespace snake
 		} m_text;
 
 		dx::F m_dpiX{ 96.f }, m_dpiY{ 96.f };
+
+		dx::F m_factor{ 1.0f }, m_offsetX{ 0.0f }, m_offsetY{ 0.0f };
+		bool m_isFullscreen{ false };
+		DWORD m_oldStyle{};
+		SIZE m_oldSize{}, m_oldPos{};
+
 		dx::SzU m_border{};
 		POINT m_minSize{ .x = 640, .y = 480 };
 		static constexpr dx::F s_tileSz{ 18.f }, s_fieldWidth{ 63.f }, s_fieldHeight{ 36.f };
@@ -95,6 +101,8 @@ namespace snake
 		static LRESULT CALLBACK sp_winProc(HWND hwnd, UINT uMsg, WPARAM wp, LPARAM lp) noexcept;
 
 		void p_calcDpiSpecific() noexcept;
+		void p_calcPositions() noexcept;
+		void p_toggleFullScreen() noexcept;
 		bool p_loadD2D1BitmapFromResource(
 			std::uint16_t resourceId,
 			dx::SzU const & bmSize,
@@ -196,7 +204,7 @@ namespace snake
 		void destroyAssets() noexcept;
 
 		void onRender() noexcept;
-		void onResize(UINT width, UINT height) const noexcept;
+		void onResize(UINT width, UINT height) noexcept;
 
 		LRESULT onKeyPress(WPARAM wp, LPARAM lp) noexcept;
 		LRESULT onKeyRelease(WPARAM wp, LPARAM lp) noexcept;

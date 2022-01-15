@@ -21,8 +21,8 @@ IDW_SOUND_WIN WAVE "assets/tada.wav"
 
 #include <winver.h>
 VS_VERSION_INFO		VERSIONINFO
-FILEVERSION			1,0,1
-PRODUCTVERSION		1,0,1
+FILEVERSION			VERSION_SEQ
+PRODUCTVERSION		VERSION_SEQ
 FILEFLAGSMASK		VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
 	FILEFLAGS		VS_FF_DEBUG | VS_FF_PRERELEASE
@@ -39,12 +39,12 @@ BEGIN
 		BEGIN
 			VALUE "CompanyName", "Maku Maku"
 			VALUE "FileDescription", "A version of Snake written in C++ and using Direct2D"
-			VALUE "FileVersion", "1.0.1"
+			VALUE "FileVersion", VERSION_STR
 			VALUE "InternalName", "Win32App"
 			VALUE "LegalCopyright", "\xA92022 Maku Maku"
 			VALUE "OriginalFileName", "SnakeD2D.exe"
 			VALUE "ProductName", "SnakeD2D"
-			VALUE "ProductVersion", "1.0.1"
+			VALUE "ProductVersion", VERSION_STR
 		END
 	END
 	BLOCK "VarFileInfo"

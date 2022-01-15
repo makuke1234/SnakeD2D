@@ -81,7 +81,9 @@ LRESULT CALLBACK snake::Application::sp_winProc(HWND hwnd, UINT uMsg, WPARAM wp,
 	}
 	case WM_SIZE:
 	{
-		This->onResize(LOWORD(lp), HIWORD(lp));
+		RECT r;
+		::GetClientRect(hwnd, &r);
+		This->onResize(r.right - r.left, r.bottom - r.top);
 		break;
 	}
 	case WM_DPICHANGED:
@@ -484,6 +486,82 @@ void snake::Application::p_calcDpiSpecific() noexcept
 		.height = s_tileSz - this->toDipy(dY)
 	};
 }
+void snake::Application::p_calcPositions() noexcept
+{
+	RECT r{};
+	::GetClientRect(this->m_hwnd, &r);
+	auto realx = float(r.right  - r.left);
+	auto realy = float(r.bottom - r.top);
+
+	auto x = this->fromDipxi<float>(s_tileSz, this->s_fieldWidth);
+	auto y = this->fromDipyi<float>(s_tileSz, this->s_fieldHeight);
+
+	auto factX = realx / x;
+	auto factY = realy / y;
+
+	this->m_factor = factX < factY ? factX : factY;
+	this->m_offsetX = this->toDipx((realx - x * this->m_factor) / 2.0f);
+	this->m_offsetY = this->toDipy((realy - y * this->m_factor) / 2.0f);
+}
+void snake::Application::p_toggleFullScreen() noexcept
+{
+	this->m_isFullscreen ^= 1;
+
+	if (this->m_isFullscreen)
+	{
+		RECT r{};
+		::GetClientRect(this->m_hwnd, &r);
+		this->m_oldSize = {
+			.cx = r.right  - r.left,
+			.cy = r.bottom - r.top
+		};
+		::GetWindowRect(this->m_hwnd, &r);
+		this->m_oldPos = {
+			.cx = r.left,
+			.cy = r.top
+		};
+		this->m_oldStyle = static_cast<DWORD>(::SetWindowLongPtrW(
+			this->m_hwnd,
+			GWL_STYLE,
+			WS_SYSMENU | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE
+		));
+
+		// Get screen size
+		SIZE screen;
+		if (snake::getScreenSize(this->m_hwnd, screen)) [[likely]]
+		{
+			::MoveWindow(this->m_hwnd, 0, 0, screen.cx, screen.cy, TRUE);
+		}
+		else [[unlikely]]
+		{
+			this->error(L"Error going to fullscreen!");
+		}
+	}
+	else
+	{
+		RECT r = {
+			.left   = 0,
+			.top    = 0,
+			.right  = this->m_oldSize.cx,
+			.bottom = this->m_oldSize.cy
+		};
+		::SetWindowLongPtrW(
+			this->m_hwnd,
+			GWL_STYLE,
+			this->m_oldStyle
+		);
+		::AdjustWindowRect(&r, this->m_oldStyle, FALSE);
+		::MoveWindow(
+			this->m_hwnd,
+			this->m_oldPos.cx,
+			this->m_oldPos.cy,
+			r.right  - r.left,
+			r.bottom - r.top,
+			TRUE
+		);
+		this->p_calcDpiSpecific();
+	}
+}
 bool snake::Application::p_loadD2D1BitmapFromResource(
 	std::uint16_t resourceId,
 	dx::SzU const & bmSize,
@@ -616,7 +694,7 @@ bool snake::Application::initApp(HINSTANCE hInst, int nCmdShow)
 		0,
 		this->s_className.data(),
 		this->s_applicationName.data(),
-		WS_OVERLAPPEDWINDOW ^ (WS_SIZEBOX | WS_MAXIMIZEBOX),
+		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
@@ -1001,7 +1079,11 @@ void snake::Application::onRender() noexcept
 
 	// Begin also render target painting
 	this->m_pRT->BeginDraw();
-	this->m_pRT->SetTransform(D2D1::Matrix3x2F::Identity());
+
+	auto scale     = D2D1::Matrix3x2F::Scale(D2D1::SizeF(this->m_factor, this->m_factor), D2D1::Point2F());
+	auto translate = D2D1::Matrix3x2F::Translation(D2D1::SizeF(this->m_offsetX, this->m_offsetY));
+	this->m_pRT->SetTransform(scale * translate);
+
 	this->m_pRT->Clear(D2D1::ColorF(60.f / 255.f, 45.f / 255.f, 159.f / 255.f));
 
 	// Get width and height
@@ -1009,29 +1091,33 @@ void snake::Application::onRender() noexcept
 	auto [width, height] = POINT{ LONG(fwidth), LONG(fheight) };
 	*/
 
+	// Render scoring first
+	this->m_text.onRender(this->m_tileSzF, this->m_pRT, this->m_snakeLogic.m_sInfo.scoring);
+	
+	
 	Tile::onRender(this->m_tiles.obstacleTiles , this->m_pRT);
-	// Render food tile first
 	this->m_tiles.snakeFoodTile.onRender(this->m_pRT);
 
 	Tile::onRender(this->m_tiles.snakeBodyTiles, this->m_pRT);
 	this->m_tiles.snakeHeadTile.onRender(this->m_pRT);
-
-	this->m_text.onRender(this->m_tileSzF, this->m_pRT, this->m_snakeLogic.m_sInfo.scoring);
 
 	if (this->m_pRT->EndDraw() == HRESULT(D2DERR_RECREATE_TARGET)) [[unlikely]]
 		this->destroyAssets();
 
 	::EndPaint(this->m_hwnd, &ps);
 }
-void snake::Application::onResize(UINT width, UINT height) const noexcept
+void snake::Application::onResize(UINT width, UINT height) noexcept
 {
-	if (this->m_pRT) [[likely]]
+	if (this->m_pRT == nullptr) [[unlikely]]
 	{
-		this->m_pRT->Resize(dx::SzU{ width, height });
+		return;
 	}
+
+	this->m_pRT->Resize(dx::SzU{ width, height });
+	this->p_calcPositions();
 }
 
-LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) noexcept
+LRESULT snake::Application::onKeyPress(WPARAM wp, LPARAM lp) noexcept
 {
 	Logic::direction dir{};
 	switch (wp)
@@ -1046,12 +1132,18 @@ LRESULT snake::Application::onKeyPress(WPARAM wp, [[maybe_unused]] LPARAM lp) no
 			return 0;
 		}
 		break;
-	
 	case VK_RETURN:
 		if (this->m_snakeLogic.m_sInfo.scoring.mode != Logic::SnakeInfo::modes::normal || this->m_snakeLogic.m_sInfo.scoring.paused)
 		{
 			this->restartGame();
 			return 0;
+		}
+		break;
+	case VK_F11:
+		// Act only if key was just pressed down, prevents spamming
+		if ((lp & 0x40000000) == 0)
+		{
+			this->p_toggleFullScreen();
 		}
 		break;
 	}

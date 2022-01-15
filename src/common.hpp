@@ -81,4 +81,6 @@ namespace snake
 	void playSndRsc(std::uint16_t resource, HINSTANCE hInst) noexcept;
 	void playSndRscAsync(std::uint16_t resource, HINSTANCE hInst) noexcept;
 	void stopSndRscAsync() noexcept;
+
+	bool getScreenSize(HWND window, SIZE & screen) noexcept;
 }

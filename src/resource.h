@@ -18,5 +18,7 @@
 #define IDW_SOUND_GAME_OVER 111
 #define IDW_SOUND_WIN       112
 
+#define VERSION_STR "1.0.2"
+#define VERSION_SEQ 1,0,2
 
 #endif
