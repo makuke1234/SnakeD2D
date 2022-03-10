@@ -3,6 +3,7 @@
 [![Release version](https://img.shields.io/github/v/release/makuke1234/SnakeD2D?display_name=release&include_prereleases)](https://github.com/makuke1234/SnakeD2D/releases/latest)
 [![Total downloads](https://img.shields.io/github/downloads/makuke1234/SnakeD2D/total)](https://github.com/makuke1234/SnakeD2D/releases)
 ![C++ version](https://img.shields.io/badge/version-C++20-blue.svg)
+[![wakatime](https://wakatime.com/badge/github/makuke1234/SnakeD2D.svg)](https://wakatime.com/badge/github/makuke1234/SnakeD2D)
 
 A snake fork written in C++ utilising Direct2D API.
 
